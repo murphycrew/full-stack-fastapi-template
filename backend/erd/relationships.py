@@ -60,21 +60,23 @@ class RelationshipDefinition:
         # Build relationship line with proper cardinality symbols
         cardinality_map = {
             Cardinality.ONE: "||",
-            Cardinality.ZERO_OR_ONE: "|o", 
+            Cardinality.ZERO_OR_ONE: "|o",
             Cardinality.ZERO_OR_MORE: "o{",
             Cardinality.ONE_OR_MORE: "}|",
         }
-        
+
         from_symbol = cardinality_map.get(self.from_cardinality, "||")
         to_symbol = cardinality_map.get(self.to_cardinality, "||")
-        
+
         # Create relationship line
-        relationship_line = f"{self.from_entity} {from_symbol}--{to_symbol} {self.to_entity}"
-        
+        relationship_line = (
+            f"{self.from_entity} {from_symbol}--{to_symbol} {self.to_entity}"
+        )
+
         # Add label if present
         if self.label:
             relationship_line += f" : {self.label}"
-        
+
         return relationship_line
 
     def is_bidirectional(self) -> bool:

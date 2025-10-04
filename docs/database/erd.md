@@ -42,7 +42,7 @@ USER ||--o{ ITEM : items
 #### ITEM
 - **Purpose**: Stores user-owned items
 - **Primary Key**: `id` (UUID)
-- **Foreign Keys**: 
+- **Foreign Keys**:
   - `owner_id` → `USER.id`
 - **Fields**:
   - `id`: Primary key (UUID, auto-generated)
@@ -105,7 +105,7 @@ The ERD generation process includes validation to ensure:
 
 The ERD generation system is designed to handle:
 - **Small schemas** (< 5 tables): < 1 second
-- **Medium schemas** (5-10 tables): < 5 seconds  
+- **Medium schemas** (5-10 tables): < 5 seconds
 - **Large schemas** (10-20 tables): < 30 seconds
 - **Very large schemas** (20+ tables): Scales linearly
 

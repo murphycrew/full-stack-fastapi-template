@@ -83,7 +83,7 @@ pre-commit run --all-files
    ```bash
    # Check if ERD was updated
    git diff HEAD~1 docs/database/erd.md
-   
+
    # Validate ERD accuracy
    python -m backend.scripts.generate_erd --validate
    ```
@@ -127,14 +127,14 @@ erDiagram
         string full_name
         string hashed_password
     }
-    
+
     ITEM {
         uuid id PK
         string title
         string description
         uuid owner_id FK
     }
-    
+
     USER ||--o{ ITEM : owns
 ```
 

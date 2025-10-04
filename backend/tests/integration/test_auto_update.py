@@ -78,7 +78,9 @@ class TestModel(SQLModel, table=True):
 
         # Should show ERD file in staging area (git shows relative path without ../)
         erd_file_relative = str(erd_file).replace("../", "")
-        assert erd_file_relative in status_result.stdout or status_result.returncode != 0
+        assert (
+            erd_file_relative in status_result.stdout or status_result.returncode != 0
+        )
 
     def test_model_change_detection(self):
         """Test detection of model changes triggering ERD updates."""

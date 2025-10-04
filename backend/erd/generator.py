@@ -2,16 +2,17 @@
 ERD Generator Module - Main entity responsible for generating Mermaid ERD diagrams from SQLModel definitions.
 """
 
+import logging
 from datetime import datetime
 from pathlib import Path
 
-from .entities import EntityDefinition
 from .discovery import ModelDiscovery
+from .entities import EntityDefinition
+from .mermaid_validator import MermaidValidator
 from .models import FieldMetadata, ModelMetadata, RelationshipMetadata
 from .output import ERDOutput
 from .relationships import RelationshipDefinition, RelationshipManager
 from .validation import ERDValidator
-from .mermaid_validator import MermaidValidator
 
 
 class ERDGenerator:
@@ -65,7 +66,7 @@ class ERDGenerator:
 
             # Step 7: Validate the generated ERD
             validation_result = self.validator.validate_all(mermaid_code)
-            
+
             # Step 8: Validate Mermaid syntax
             mermaid_validation = self.mermaid_validator.validate_complete(mermaid_code)
             validation_result.errors.extend(mermaid_validation.errors)
@@ -115,7 +116,7 @@ class ERDGenerator:
             error_output.mark_as_error(error_msg)
             try:
                 self._write_output(error_output)
-            except:
+            except Exception:
                 pass  # Don't fail on error output write
             raise e  # Re-raise the original exception
         except Exception as e:
@@ -156,18 +157,20 @@ class ERDGenerator:
                 # Validate field types and constraints
                 for field in model_metadata.fields:
                     if not field.type_hint or field.type_hint == "Any":
-                        validation_errors.append(f"Model {model_name}.{field.name} has no type hint")
+                        validation_errors.append(
+                            f"Model {model_name}.{field.name} has no type hint"
+                        )
 
             if validation_errors:
-                print("Validation errors found:")
+                logging.warning("Validation errors found:")
                 for error in validation_errors:
-                    print(f"  - {error}")
+                    logging.warning(f"  - {error}")
                 return False
 
             return True
 
         except Exception as e:
-            print(f"Validation failed: {e}")
+            logging.error(f"Validation failed: {e}")
             return False
 
     def _discover_models(self) -> None:
@@ -200,7 +203,7 @@ class ERDGenerator:
             # Enhanced field extraction with type hints and constraints
             for field_name in model_info.get("fields", []):
                 field_meta = self._create_field_metadata(model_info, field_name)
-                
+
                 # Skip relationship fields - they're not database columns
                 if not self._is_relationship_field(field_meta, model_info):
                     fields.append(field_meta)
@@ -223,39 +226,43 @@ class ERDGenerator:
 
             self.generated_models[model_name] = model_metadata
 
-    def _is_relationship_field(self, field_meta: FieldMetadata, model_info: dict) -> bool:
+    def _is_relationship_field(
+        self, field_meta: FieldMetadata, model_info: dict
+    ) -> bool:
         """Check if a field is a relationship field (not a database column)."""
         # Check if this field is defined as a Relationship() in the model
         for rel_info in model_info.get("relationships", []):
             if rel_info["field_name"] == field_meta.name:
                 return True
-        
+
         # Check field type for relationship indicators
         field_type = field_meta.type_hint.lower()
-        
+
         # List types are usually relationships (e.g., list["Item"])
         if "list[" in field_type or "List[" in field_type:
             return True
-        
+
         # Union types with None might be relationships (e.g., User | None)
         if "| None" in field_type and not field_meta.is_foreign_key:
             return True
-        
+
         return False
 
-    def _is_bidirectional_relationship(self, rel_meta: RelationshipMetadata, target_model: ModelMetadata) -> bool:
+    def _is_bidirectional_relationship(
+        self, rel_meta: RelationshipMetadata, target_model: ModelMetadata
+    ) -> bool:
         """Check if a relationship is bidirectional (has back_populates)."""
         # Check if this relationship has back_populates
         if not rel_meta.back_populates:
             return False
-        
+
         # Check if the target model has a corresponding relationship with back_populates pointing back
         for target_rel in target_model.relationships:
             # The target relationship should have back_populates pointing to our field_name
             # and should point to our source model
-            if (target_rel.back_populates == rel_meta.field_name):
+            if target_rel.back_populates == rel_meta.field_name:
                 return True
-        
+
         return False
 
     def _generate_entities(self) -> list[EntityDefinition]:
@@ -280,24 +287,28 @@ class ERDGenerator:
                 target_model_name = rel_meta.target_model
                 if target_model_name in self.generated_models:
                     target_model = self.generated_models[target_model_name]
-                    
+
                     # Create relationship key for bidirectional detection
                     pair_key = tuple(sorted([model_name, target_model_name]))
-                    
+
                     if pair_key not in processed_pairs:
                         # Check if this is bidirectional
                         if self._is_bidirectional_relationship(rel_meta, target_model):
                             # Always prefer the one-to-many direction
                             if rel_meta.relationship_type == "one-to-many":
-                                relationship = RelationshipDefinition.from_model_relationship(
-                                    rel_meta, model_metadata, target_model
+                                relationship = (
+                                    RelationshipDefinition.from_model_relationship(
+                                        rel_meta, model_metadata, target_model
+                                    )
                                 )
                                 relationships.append(relationship)
                                 processed_pairs.add(pair_key)
                         else:
                             # Non-bidirectional, render normally
-                            relationship = RelationshipDefinition.from_model_relationship(
-                                rel_meta, model_metadata, target_model
+                            relationship = (
+                                RelationshipDefinition.from_model_relationship(
+                                    rel_meta, model_metadata, target_model
+                                )
                             )
                             relationships.append(relationship)
 
@@ -308,10 +319,10 @@ class ERDGenerator:
                 target_model_name = self._find_target_model(field.name)
                 if target_model_name and target_model_name in self.generated_models:
                     target_model = self.generated_models[target_model_name]
-                    
+
                     # Create relationship key for bidirectional detection
                     pair_key = tuple(sorted([_model_name, target_model_name]))
-                    
+
                     if pair_key not in processed_pairs:
                         relationship = RelationshipDefinition.from_foreign_key(
                             model_metadata, target_model, field
@@ -358,11 +369,15 @@ class ERDGenerator:
         mermaid_content = erd_output.to_mermaid_format()
         output_path.write_text(mermaid_content, encoding="utf-8")
 
-    def _create_field_metadata(self, model_info: dict, field_name: str) -> FieldMetadata:
+    def _create_field_metadata(
+        self, model_info: dict, field_name: str
+    ) -> FieldMetadata:
         """Create enhanced field metadata with type hints and constraints."""
         # Parse the actual model file to get detailed field information
         file_path = Path(model_info["file_path"])
-        field_meta = self._parse_field_from_source(file_path, model_info["name"], field_name)
+        field_meta = self._parse_field_from_source(
+            file_path, model_info["name"], field_name
+        )
 
         # If parsing failed, use basic heuristics
         if not field_meta:
@@ -376,12 +391,14 @@ class ERDGenerator:
 
         return field_meta
 
-    def _parse_field_from_source(self, file_path: Path, class_name: str, field_name: str) -> FieldMetadata | None:
+    def _parse_field_from_source(
+        self, file_path: Path, class_name: str, field_name: str
+    ) -> FieldMetadata | None:
         """Parse field information from the source file using AST."""
         try:
             import ast
 
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -389,10 +406,16 @@ class ERDGenerator:
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef) and node.name == class_name:
                     for item in node.body:
-                        if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
+                        if isinstance(item, ast.AnnAssign) and isinstance(
+                            item.target, ast.Name
+                        ):
                             if item.target.id == field_name:
                                 # Extract type hint
-                                type_hint = ast.unparse(item.annotation) if item.annotation else "Any"
+                                type_hint = (
+                                    ast.unparse(item.annotation)
+                                    if item.annotation
+                                    else "Any"
+                                )
 
                                 # Check for Field() call
                                 is_primary_key = False
@@ -403,12 +426,19 @@ class ERDGenerator:
                                 if isinstance(item.value, ast.Call):
                                     # Parse Field() arguments
                                     for keyword in item.value.keywords:
-                                        if keyword.arg == "primary_key" and isinstance(keyword.value, ast.Constant):
+                                        if keyword.arg == "primary_key" and isinstance(
+                                            keyword.value, ast.Constant
+                                        ):
                                             is_primary_key = keyword.value.value
-                                        elif keyword.arg == "foreign_key" and isinstance(keyword.value, ast.Constant):
+                                        elif (
+                                            keyword.arg == "foreign_key"
+                                            and isinstance(keyword.value, ast.Constant)
+                                        ):
                                             foreign_key_ref = keyword.value.value
                                             is_foreign_key = True
-                                        elif keyword.arg == "nullable" and isinstance(keyword.value, ast.Constant):
+                                        elif keyword.arg == "nullable" and isinstance(
+                                            keyword.value, ast.Constant
+                                        ):
                                             is_nullable = keyword.value.value
 
                                 return FieldMetadata(
@@ -442,7 +472,7 @@ class ERDGenerator:
     def _extract_relationships(self, model_info: dict) -> list[RelationshipMetadata]:
         """Extract relationships from model info."""
         relationships = []
-        
+
         # Extract relationships from the discovered relationship data
         for rel_info in model_info.get("relationships", []):
             rel_meta = RelationshipMetadata(
@@ -453,7 +483,7 @@ class ERDGenerator:
                 cascade=rel_info.get("cascade_delete", False),
             )
             relationships.append(rel_meta)
-        
+
         # Also extract foreign key relationships from field names (fallback)
         for field_name in model_info.get("fields", []):
             if field_name.endswith("_id") and field_name != "id":
@@ -462,7 +492,7 @@ class ERDGenerator:
                     rel.field_name == field_name or rel.foreign_key_field == field_name
                     for rel in relationships
                 )
-                
+
                 if not existing_rel:
                     # This looks like a foreign key relationship
                     target_model = field_name[:-3].title()  # Remove _id and capitalize
@@ -473,6 +503,5 @@ class ERDGenerator:
                         foreign_key_field=field_name,
                     )
                     relationships.append(rel_meta)
-        
-        return relationships
 
+        return relationships

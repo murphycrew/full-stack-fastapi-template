@@ -129,32 +129,33 @@ class ERDOutput:
     def to_mermaid_format(self, include_metadata: bool = True) -> str:
         """Convert ERD output to pure Mermaid format with metadata as comments."""
         lines = []
-        
+
         if include_metadata:
-               lines.extend([
-                   "%% Database ERD Diagram",
-                   f"%% Generated: {self.metadata.get('generated_at', 'Unknown')}",
-                   f"%% Version: {self.metadata.get('version', 'Unknown')}",
-                   f"%% Entities: {len(self.entities)}",
-                   f"%% Relationships: {len(self.relationships)}",
-                   f"%% Status: {self.validation_status}",
-                   ""
-               ])
-            
-               if self.has_errors and "error_message" in self.metadata:
-                   lines.extend([
-                       f"%% Error: {self.metadata['error_message']}",
-                       ""
-                   ])
-               
-               lines.extend([
-                   "%% This diagram is automatically generated from SQLModel definitions",
-                   ""
-               ])
-        
+            lines.extend(
+                [
+                    "%% Database ERD Diagram",
+                    f"%% Generated: {self.metadata.get('generated_at', 'Unknown')}",
+                    f"%% Version: {self.metadata.get('version', 'Unknown')}",
+                    f"%% Entities: {len(self.entities)}",
+                    f"%% Relationships: {len(self.relationships)}",
+                    f"%% Status: {self.validation_status}",
+                    "",
+                ]
+            )
+
+            if self.has_errors and "error_message" in self.metadata:
+                lines.extend([f"%% Error: {self.metadata['error_message']}", ""])
+
+            lines.extend(
+                [
+                    "%% This diagram is automatically generated from SQLModel definitions",
+                    "",
+                ]
+            )
+
         # Add the actual Mermaid diagram
         lines.append(self.mermaid_code)
-        
+
         return "\n".join(lines)
 
     def to_dict(self) -> dict[str, Any]:

@@ -4,6 +4,7 @@ CLI script for ERD generation.
 """
 
 import argparse
+import logging
 import os
 import sys
 import tempfile
@@ -14,30 +15,53 @@ from pathlib import Path
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
-from erd import ERDGenerator
+# Import after path modification for script execution
+from erd import ERDGenerator  # noqa: E402
 
 
 def _is_ci_environment() -> bool:
     """Check if we're running in a CI environment."""
     ci_indicators = [
-        'CI', 'GITHUB_ACTIONS', 'GITLAB_CI', 'JENKINS_URL', 'BUILDKITE',
-        'CIRCLECI', 'TRAVIS', 'APPVEYOR', 'DRONE', 'SEMAPHORE'
+        "CI",
+        "GITHUB_ACTIONS",
+        "GITLAB_CI",
+        "JENKINS_URL",
+        "BUILDKITE",
+        "CIRCLECI",
+        "TRAVIS",
+        "APPVEYOR",
+        "DRONE",
+        "SEMAPHORE",
     ]
     return any(os.getenv(indicator) for indicator in ci_indicators)
 
 
 def main():
     """Main CLI entry point for ERD generation."""
-    parser = argparse.ArgumentParser(description="Generate Mermaid ERD diagrams from SQLModel definitions")
-    parser.add_argument("--models-path", default="app/models.py", help="Path to SQLModel definitions")
-    parser.add_argument("--output-path", default=None, help="Path for generated ERD documentation")
-    parser.add_argument("--validate", action="store_true", help="Run validation checks on generated ERD")
+    parser = argparse.ArgumentParser(
+        description="Generate Mermaid ERD diagrams from SQLModel definitions"
+    )
+    parser.add_argument(
+        "--models-path", default="app/models.py", help="Path to SQLModel definitions"
+    )
+    parser.add_argument(
+        "--output-path", default=None, help="Path for generated ERD documentation"
+    )
+    parser.add_argument(
+        "--validate", action="store_true", help="Run validation checks on generated ERD"
+    )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
-    parser.add_argument("--force", action="store_true", help="Force overwrite of existing output file")
-    parser.add_argument("--backup", action="store_true", help="Create backup of existing ERD file before overwriting")
+    parser.add_argument(
+        "--force", action="store_true", help="Force overwrite of existing output file"
+    )
+    parser.add_argument(
+        "--backup",
+        action="store_true",
+        help="Create backup of existing ERD file before overwriting",
+    )
 
     args = parser.parse_args()
-    
+
     # Set default output path based on environment
     if args.output_path is None:
         if _is_ci_environment():
@@ -50,7 +74,7 @@ def main():
         else:
             # In development, use the docs directory
             args.output_path = "../docs/database/erd.mmd"
-    
+
     # If output path is explicitly provided and we're in CI, use force mode
     elif _is_ci_environment():
         args.force = True
@@ -58,28 +82,27 @@ def main():
     try:
         # Enhanced file system operations
         if not _validate_input_path(args.models_path):
-            print(f"Invalid models path: {args.models_path}", file=sys.stderr)
+            logging.error(f"Invalid models path: {args.models_path}")
             return 2
 
         if not _prepare_output_path(args.output_path, args.force, args.backup):
-            print(f"Failed to prepare output path: {args.output_path}", file=sys.stderr)
+            logging.error(f"Failed to prepare output path: {args.output_path}")
             return 3
 
         # Initialize ERD generator
         generator = ERDGenerator(
-            models_path=args.models_path,
-            output_path=args.output_path
+            models_path=args.models_path, output_path=args.output_path
         )
 
         if args.verbose:
-            print(f"Models path: {args.models_path}")
-            print(f"Output path: {args.output_path}")
-            print("Starting ERD generation...")
+            logging.info(f"Models path: {args.models_path}")
+            logging.info(f"Output path: {args.output_path}")
+            logging.info("Starting ERD generation...")
 
         # Validate models if requested
         if args.validate:
             if args.verbose:
-                print("Validating models...")
+                logging.info("Validating models...")
             validation_result = _validate_models(generator, args.verbose)
             if not validation_result:
                 return 2
@@ -88,29 +111,32 @@ def main():
         mermaid_code = generator.generate_erd()
 
         if args.verbose:
-            print("ERD generation completed successfully")
-            print(f"Generated {len(mermaid_code.splitlines())} lines of Mermaid code")
+            logging.info("ERD generation completed successfully")
+            logging.info(
+                f"Generated {len(mermaid_code.splitlines())} lines of Mermaid code"
+            )
             _print_output_summary(args.output_path)
 
         return 0
 
     except FileNotFoundError as e:
-        print(f"File not found: {e}", file=sys.stderr)
+        logging.error(f"File not found: {e}")
         return 2
     except PermissionError as e:
-        print(f"Permission denied: {e}", file=sys.stderr)
+        logging.error(f"Permission denied: {e}")
         return 3
     except OSError as e:
         if "Read-only file system" in str(e) or "Permission denied" in str(e):
-            print(f"Permission denied: {e}", file=sys.stderr)
+            logging.error(f"Permission denied: {e}")
             return 3
         else:
-            print(f"OS error: {e}", file=sys.stderr)
+            logging.error(f"OS error: {e}")
             return 2
     except Exception as e:
-        print(f"ERD generation failed: {e}", file=sys.stderr)
+        logging.error(f"ERD generation failed: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 
@@ -147,17 +173,17 @@ def _prepare_output_path(output_path: str, force: bool, backup: bool) -> bool:
     # Handle existing file
     if path.exists():
         if not force:
-            print(f"Output file already exists: {output_path}", file=sys.stderr)
-            print("Use --force to overwrite or --backup to create a backup", file=sys.stderr)
+            logging.error(f"Output file already exists: {output_path}")
+            logging.error("Use --force to overwrite or --backup to create a backup")
             return False
 
         if backup:
             backup_path = path.with_suffix(f"{path.suffix}.backup.{int(time.time())}")
             try:
                 path.rename(backup_path)
-                print(f"Created backup: {backup_path}")
+                logging.info(f"Created backup: {backup_path}")
             except PermissionError:
-                print(f"Warning: Could not create backup of {output_path}", file=sys.stderr)
+                logging.warning(f"Could not create backup of {output_path}")
 
     # Check if we can write to the output location
     try:
@@ -168,23 +194,23 @@ def _prepare_output_path(output_path: str, force: bool, backup: bool) -> bool:
         return False
 
 
-def _validate_models(generator: ERDGenerator, verbose: bool) -> bool:
+def _validate_models(generator: ERDGenerator, verbose: bool = False) -> bool:  # noqa: ARG001
     """Enhanced model validation with detailed reporting."""
     try:
         is_valid = generator.validate_models()
 
         if not is_valid:
-            print("Model validation issues found:")
+            logging.warning("Model validation issues found:")
             # This could be enhanced to show specific validation errors
-            print("- Check that all models have primary keys")
-            print("- Verify field definitions are correct")
-            print("- Ensure foreign key references are valid")
+            logging.warning("- Check that all models have primary keys")
+            logging.warning("- Verify field definitions are correct")
+            logging.warning("- Ensure foreign key references are valid")
         else:
-            print("Model validation passed successfully")
+            logging.info("Model validation passed successfully")
 
         return is_valid
     except Exception as e:
-        print(f"Validation error: {e}")
+        logging.error(f"Validation error: {e}")
         return False
 
 
@@ -194,14 +220,14 @@ def _print_output_summary(output_path: str) -> None:
 
     if path.exists():
         file_size = path.stat().st_size
-        print(f"Output file: {output_path}")
-        print(f"File size: {file_size} bytes")
+        logging.info(f"Output file: {output_path}")
+        logging.info(f"File size: {file_size} bytes")
 
         # Try to count lines
         try:
             with open(path) as f:
                 line_count = sum(1 for _ in f)
-            print(f"Line count: {line_count}")
+            logging.info(f"Line count: {line_count}")
         except Exception:
             pass
 

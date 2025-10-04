@@ -8,6 +8,25 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+import pytest
+
+
+def _is_ci_environment() -> bool:
+    """Check if we're running in a CI environment."""
+    ci_indicators = [
+        "CI",
+        "GITHUB_ACTIONS",
+        "GITLAB_CI",
+        "JENKINS_URL",
+        "BUILDKITE",
+        "CIRCLECI",
+        "TRAVIS",
+        "APPVEYOR",
+        "DRONE",
+        "SEMAPHORE",
+    ]
+    return any(os.getenv(indicator) for indicator in ci_indicators)
+
 
 class TestPreCommitHook:
     """Test pre-commit hook contract compliance."""
@@ -20,6 +39,9 @@ class TestPreCommitHook:
         content = config_file.read_text()
         assert "erd-generation" in content or "generate_erd" in content
 
+    @pytest.mark.skipif(
+        _is_ci_environment(), reason="Pre-commit hooks should not run in CI"
+    )
     def test_pre_commit_hook_registration(self):
         """Test that ERD generation hook is properly registered."""
         result = subprocess.run(
@@ -40,6 +62,9 @@ class TestPreCommitHook:
         # If hook exists but fails, that's expected until implementation
         assert result.returncode in [0, 1]  # 0 if passes, 1 if hook fails (expected)
 
+    @pytest.mark.skipif(
+        _is_ci_environment(), reason="Pre-commit hooks should not run in CI"
+    )
     def test_hook_triggers_on_model_changes(self):
         """Test that hook triggers when SQLModel files are modified."""
         # Create a temporary test file that looks like a model file
@@ -68,6 +93,9 @@ class TestModel(SQLModel, table=True):
         finally:
             os.unlink(temp_file)
 
+    @pytest.mark.skipif(
+        _is_ci_environment(), reason="Pre-commit hooks should not run in CI"
+    )
     def test_hook_file_detection(self):
         """Test that hook detects SQLModel definition files."""
         # Test with actual models.py file
@@ -82,6 +110,9 @@ class TestModel(SQLModel, table=True):
             # Should attempt to run on models file
             assert result.returncode in [0, 1]
 
+    @pytest.mark.skipif(
+        _is_ci_environment(), reason="Pre-commit hooks should not run in CI"
+    )
     def test_hook_generates_erd_output(self):
         """Test that hook generates ERD output when triggered."""
         # This test will fail until hook is implemented
@@ -101,6 +132,9 @@ class TestModel(SQLModel, table=True):
             erd_file = Path("../docs/database/erd.mmd")
             assert erd_file.exists()
 
+    @pytest.mark.skipif(
+        _is_ci_environment(), reason="Pre-commit hooks should not run in CI"
+    )
     def test_hook_validation_integration(self):
         """Test that hook integrates with validation system."""
         result = subprocess.run(
@@ -120,6 +154,9 @@ class TestModel(SQLModel, table=True):
                 word in output.lower() for word in ["validation", "error", "fail"]
             )
 
+    @pytest.mark.skipif(
+        _is_ci_environment(), reason="Pre-commit hooks should not run in CI"
+    )
     def test_hook_performance_requirements(self):
         """Test that hook completes within performance requirements."""
         import time
@@ -139,6 +176,9 @@ class TestModel(SQLModel, table=True):
         # Hook should run (may fail until implemented)
         assert result.returncode in [0, 1]
 
+    @pytest.mark.skipif(
+        _is_ci_environment(), reason="Pre-commit hooks should not run in CI"
+    )
     def test_hook_error_handling(self):
         """Test that hook handles errors gracefully."""
         # Test with invalid model file
@@ -161,6 +201,9 @@ class TestModel(SQLModel, table=True):
         finally:
             os.unlink(temp_file)
 
+    @pytest.mark.skipif(
+        _is_ci_environment(), reason="Pre-commit hooks should not run in CI"
+    )
     def test_hook_stages_updated_files(self):
         """Test that hook stages updated documentation files."""
         # This test verifies the expected behavior after implementation

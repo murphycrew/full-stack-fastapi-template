@@ -1,4 +1,4 @@
-<!-- 
+<!--
 Sync Impact Report:
 Version change: 0.1.0 → 1.0.0 (MAJOR: Initial constitution creation)
 Modified principles: N/A (new constitution)

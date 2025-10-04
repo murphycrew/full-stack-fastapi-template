@@ -42,7 +42,11 @@ class ValidationError:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert ValidationError to dictionary."""
-        severity_value = self.severity.value if hasattr(self.severity, 'value') else str(self.severity)
+        severity_value = (
+            self.severity.value
+            if hasattr(self.severity, "value")
+            else str(self.severity)
+        )
         return {
             "message": self.message,
             "severity": severity_value,
@@ -68,12 +72,12 @@ class ValidationResult:
         self.errors.append(error)
         # Check if severity is string or enum
         severity = error.severity
-        if hasattr(severity, 'value'):
+        if hasattr(severity, "value"):
             severity_value = severity.value
         else:
             severity_value = str(severity)
-        
-        if severity_value in ['critical', 'error']:
+
+        if severity_value in ["critical", "error"]:
             self.is_valid = False
 
     def add_warning(self, warning: ValidationError) -> None:
@@ -131,8 +135,7 @@ class ERDValidator:
             result.errors.extend(syntax_result.errors)
             result.warnings.extend(syntax_result.warnings)
 
-            # Parse entities and relationships for validation
-            entities = self._parse_entities(erd_content)
+            # Parse relationships for validation
             relationships = self._parse_relationships(erd_content)
 
             # Validate entities exist
@@ -351,11 +354,12 @@ class ERDValidator:
                 # Split on the relationship pattern, but be more careful about parsing
                 # Look for patterns like "ENTITY1 ||--o{ ENTITY2 : label"
                 import re
-                match = re.match(r'(\w+)\s+\|?\|\-?\-?[o\}]*\{\s*(\w+)', line)
+
+                match = re.match(r"(\w+)\s+\|?\|\-?\-?[o\}]*\{\s*(\w+)", line)
                 if match:
                     from_entity = match.group(1)
                     to_entity = match.group(2)
-                    
+
                     relationship = {
                         "from_entity": from_entity,
                         "to_entity": to_entity,

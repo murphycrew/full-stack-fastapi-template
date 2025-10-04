@@ -17,37 +17,37 @@ Main Components:
 
 Usage:
     from erd import ERDGenerator
-    
+
     generator = ERDGenerator()
     mermaid_code = generator.generate_erd()
 """
 
+from .discovery import ModelDiscovery
+from .entities import EntityDefinition
 from .generator import ERDGenerator
+from .mermaid_validator import MermaidValidator
 from .models import (
+    ConstraintMetadata,
     FieldMetadata,
-    ModelMetadata, 
+    ModelMetadata,
     RelationshipMetadata,
-    ConstraintMetadata
-)
-from .validation import (
-    ERDValidator,
-    ValidationResult,
-    ValidationError,
-    ErrorSeverity,
-    ValidationMode,
-    ValidationConfig
 )
 from .output import ERDOutput
-from .entities import EntityDefinition
 from .relationships import RelationshipDefinition, RelationshipManager
-from .discovery import ModelDiscovery
-from .mermaid_validator import MermaidValidator
+from .validation import (
+    ERDValidator,
+    ErrorSeverity,
+    ValidationConfig,
+    ValidationError,
+    ValidationMode,
+    ValidationResult,
+)
 
 __version__ = "1.0.0"
 __all__ = [
     "ERDGenerator",
     "FieldMetadata",
-    "ModelMetadata", 
+    "ModelMetadata",
     "RelationshipMetadata",
     "ConstraintMetadata",
     "ERDValidator",

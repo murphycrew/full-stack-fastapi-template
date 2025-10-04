@@ -37,8 +37,7 @@ class TestERDGenerationWorkflow:
 
     def test_model_discovery_integration(self):
         """Test integration between ERD generator and model discovery."""
-        from erd import ERDGenerator
-        from erd import ModelDiscovery
+        from erd import ERDGenerator, ModelDiscovery
 
         # Test model discovery
         discovery = ModelDiscovery()
@@ -73,7 +72,9 @@ class TestERDGenerationWorkflow:
             assert "erDiagram" in file_content
             assert "%% Database ERD Diagram" in file_content
             # The file contains metadata, but the result is pure Mermaid code
-            assert result in file_content or result.replace("\n", "") in file_content.replace("\n", "")
+            assert result in file_content or result.replace(
+                "\n", ""
+            ) in file_content.replace("\n", "")
 
         finally:
             if os.path.exists(temp_output):
@@ -81,8 +82,7 @@ class TestERDGenerationWorkflow:
 
     def test_sqlmodel_parsing_integration(self):
         """Test integration with SQLModel parsing and AST analysis."""
-        from erd import ERDGenerator
-        from erd import ModelDiscovery
+        from erd import ERDGenerator, ModelDiscovery
 
         # Test parsing of actual SQLModel definitions
         discovery = ModelDiscovery()
@@ -172,8 +172,7 @@ class TestERDGenerationWorkflow:
 
     def test_validation_integration(self):
         """Test integration with validation system."""
-        from erd import ERDGenerator
-        from erd import ERDValidator
+        from erd import ERDGenerator, ERDValidator
 
         generator = ERDGenerator()
         validator = ERDValidator()

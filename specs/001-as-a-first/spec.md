@@ -1,8 +1,8 @@
 # Feature Specification: Mermaid ERD Diagram Documentation
 
-**Feature Branch**: `001-as-a-first`  
-**Created**: 2024-12-19  
-**Status**: Draft  
+**Feature Branch**: `001-as-a-first`
+**Created**: 2024-12-19
+**Status**: Draft
 **Input**: User description: "As a first feature I want to generate a Mermaid ERD diagram as Documentation. I also want to add it to the spec kit constitution and approriate templates so that when we make changes to the any of the database @models.py we also update the ERD diagram."
 
 ## Execution Flow (main)
@@ -44,7 +44,7 @@ When creating this spec from a user prompt:
 3. **Think like a tester**: Every vague requirement should fail the "testable and unambiguous" checklist item
 4. **Common underspecified areas**:
    - User types and permissions
-   - Data retention/deletion policies  
+   - Data retention/deletion policies
    - Performance targets and scale
    - Error handling behaviors
    - Integration requirements
@@ -111,7 +111,7 @@ As a developer working on the FastAPI Template project, I want to have an automa
 
 ### Requirement Completeness
 - [ ] No [NEEDS CLARIFICATION] markers remain
-- [ ] Requirements are testable and unambiguous  
+- [ ] Requirements are testable and unambiguous
 - [ ] Success criteria are measurable
 - [ ] Scope is clearly bounded
 - [ ] Dependencies and assumptions identified

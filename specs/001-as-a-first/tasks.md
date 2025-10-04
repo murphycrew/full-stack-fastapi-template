@@ -118,13 +118,13 @@ Task: "Integration test error handling workflow in tests/integration/test_error_
    - CLI interface → implementation task
    - Pre-commit hook → integration task
    - Validation system → implementation task
-   
+
 2. **From Data Model**:
    - Each entity → model creation task [P]
    - ERD Generator → core implementation task
    - Model Metadata → core implementation task
    - ERD Output → core implementation task
-   
+
 3. **From User Stories**:
    - Each story → integration test [P]
    - ERD generation workflow → integration test

@@ -31,12 +31,12 @@ class TestCLIInterface:
     def test_generate_erd_default_behavior(self):
         """Test default ERD generation without options."""
         import os
-        
+
         # Use force flag in local environment to avoid file conflicts
         cmd = [sys.executable, "scripts/generate_erd.py"]
-        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+        if not (os.getenv("CI") or os.getenv("GITHUB_ACTIONS")):
             cmd.append("--force")
-            
+
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -50,7 +50,7 @@ class TestCLIInterface:
     def test_generate_erd_custom_paths(self):
         """Test ERD generation with custom model and output paths."""
         import os
-        
+
         cmd = [
             sys.executable,
             "scripts/generate_erd.py",
@@ -59,11 +59,11 @@ class TestCLIInterface:
             "--output-path",
             "../docs/database/erd.mmd",
         ]
-        
+
         # Use force flag in local environment to avoid file conflicts
-        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+        if not (os.getenv("CI") or os.getenv("GITHUB_ACTIONS")):
             cmd.append("--force")
-            
+
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -75,12 +75,12 @@ class TestCLIInterface:
     def test_generate_erd_validate_flag(self):
         """Test ERD generation with validation flag."""
         import os
-        
+
         cmd = [sys.executable, "scripts/generate_erd.py", "--validate"]
         # Use force flag in local environment to avoid file conflicts
-        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+        if not (os.getenv("CI") or os.getenv("GITHUB_ACTIONS")):
             cmd.append("--force")
-            
+
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -92,12 +92,12 @@ class TestCLIInterface:
     def test_generate_erd_verbose_flag(self):
         """Test ERD generation with verbose flag."""
         import os
-        
+
         cmd = [sys.executable, "scripts/generate_erd.py", "--verbose"]
         # Use force flag in local environment to avoid file conflicts
-        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+        if not (os.getenv("CI") or os.getenv("GITHUB_ACTIONS")):
             cmd.append("--force")
-            
+
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -109,13 +109,13 @@ class TestCLIInterface:
     def test_cli_exit_codes(self):
         """Test CLI exit codes according to contract."""
         import os
-        
+
         # Test successful generation
         cmd = [sys.executable, "scripts/generate_erd.py"]
         # Use force flag in local environment to avoid file conflicts
-        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+        if not (os.getenv("CI") or os.getenv("GITHUB_ACTIONS")):
             cmd.append("--force")
-            
+
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -152,12 +152,12 @@ class TestCLIInterface:
     def test_validate_erd_command(self):
         """Test validate-erd command functionality."""
         import os
-        
+
         cmd = [sys.executable, "scripts/generate_erd.py", "--validate"]
         # Use force flag in local environment to avoid file conflicts
-        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+        if not (os.getenv("CI") or os.getenv("GITHUB_ACTIONS")):
             cmd.append("--force")
-            
+
         result = subprocess.run(
             cmd,
             capture_output=True,
@@ -189,10 +189,9 @@ class TestCLIInterface:
     def test_output_file_creation(self):
         """Test that ERD output file is created."""
         import os
-        import tempfile
-        
+
         # In CI, the file is created in a temporary directory
-        if os.getenv('CI') or os.getenv('GITHUB_ACTIONS'):
+        if os.getenv("CI") or os.getenv("GITHUB_ACTIONS"):
             # For CI, we can't easily check the specific file location
             # Just verify the command succeeds
             result = subprocess.run(

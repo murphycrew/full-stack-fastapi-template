@@ -88,7 +88,9 @@ class ModelDiscovery:
                             ],
                             "table": self._has_table_attribute(node),
                             "fields": self._extract_fields(node),
-                            "relationships": self._extract_relationships_from_class(node),
+                            "relationships": self._extract_relationships_from_class(
+                                node
+                            ),
                         }
                         models.append(model_info)
 
@@ -103,75 +105,90 @@ class ModelDiscovery:
         # Check if it inherits from SQLModel (directly or indirectly)
         has_sqlmodel = False
         has_table_true = False
-        
+
         # Check direct inheritance from SQLModel
         for base in class_node.bases:
             if hasattr(base, "id") and base.id == "SQLModel":
                 has_sqlmodel = True
-        
+
         # Also check if any of the base classes might be SQLModel classes
         # (for cases like User(UserBase, table=True) where UserBase inherits from SQLModel)
         for base in class_node.bases:
             if hasattr(base, "id"):
                 base_name = base.id
                 # Check if this base class might be a SQLModel class
-                # This is a simple heuristic - in a real implementation, 
+                # This is a simple heuristic - in a real implementation,
                 # we'd need to track the class hierarchy
                 if "Base" in base_name or "Model" in base_name:
                     has_sqlmodel = True
-        
+
         # Check for table=True in the class definition keywords
         # This handles cases like: class User(UserBase, table=True):
         for keyword in class_node.keywords:
             if keyword.arg == "table" and isinstance(keyword.value, ast.Constant):
                 if keyword.value.value is True:
                     has_table_true = True
-        
+
         # Only return True if it's both a SQLModel AND has table=True
         return has_sqlmodel and has_table_true
 
     def _extract_relationships_from_class(self, class_node: ast.ClassDef) -> list[dict]:
         """Extract relationship definitions from a SQLModel class."""
         relationships = []
-        
+
         for item in class_node.body:
             if isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
                 # Check if it's a Relationship() call
-                if (isinstance(item.value, ast.Call) and 
-                    hasattr(item.value.func, 'id') and 
-                    item.value.func.id == 'Relationship'):
-                    
+                if (
+                    isinstance(item.value, ast.Call)
+                    and hasattr(item.value.func, "id")
+                    and item.value.func.id == "Relationship"
+                ):
                     field_name = item.target.id
-                    field_type = ast.unparse(item.annotation) if item.annotation else "Any"
-                    
+                    field_type = (
+                        ast.unparse(item.annotation) if item.annotation else "Any"
+                    )
+
                     # Extract relationship metadata
                     back_populates = None
                     cascade_delete = False
-                    
+
                     for keyword in item.value.keywords:
-                        if keyword.arg == "back_populates" and isinstance(keyword.value, ast.Constant):
+                        if keyword.arg == "back_populates" and isinstance(
+                            keyword.value, ast.Constant
+                        ):
                             back_populates = keyword.value.value
-                        elif keyword.arg == "cascade_delete" and isinstance(keyword.value, ast.Constant):
+                        elif keyword.arg == "cascade_delete" and isinstance(
+                            keyword.value, ast.Constant
+                        ):
                             cascade_delete = keyword.value.value
-                    
+
                     # Infer target model from field type
-                    target_model = self._infer_target_model_from_type(field_type, back_populates)
-                    
+                    target_model = self._infer_target_model_from_type(
+                        field_type, back_populates
+                    )
+
                     # Determine relationship type
-                    relationship_type = self._determine_relationship_type_from_field_type(field_type)
-                    
-                    relationships.append({
-                        "field_name": field_name,
-                        "field_type": field_type,
-                        "target_model": target_model,
-                        "relationship_type": relationship_type,
-                        "back_populates": back_populates,
-                        "cascade_delete": cascade_delete,
-                    })
-        
+                    relationship_type = (
+                        self._determine_relationship_type_from_field_type(field_type)
+                    )
+
+                    relationships.append(
+                        {
+                            "field_name": field_name,
+                            "field_type": field_type,
+                            "target_model": target_model,
+                            "relationship_type": relationship_type,
+                            "back_populates": back_populates,
+                            "cascade_delete": cascade_delete,
+                        }
+                    )
+
         return relationships
 
-    def _infer_target_model_from_type(self, field_type: str, back_populates: str | None) -> str:
+    def _infer_target_model_from_type(
+        self, field_type: str, back_populates: str | None
+    ) -> str:
         """Infer target model name from field type annotation."""
         # Handle list types like list["Item"] or List[Item]
         if "list[" in field_type.lower() or "List[" in field_type:
@@ -190,13 +207,13 @@ class ModelDiscovery:
                 if end > start:
                     result = field_type[start:end]
                     return result.strip("'\"")
-            elif '[' in field_type and ']' in field_type:
+            elif "[" in field_type and "]" in field_type:
                 # Extract type from brackets
-                start = field_type.find('[') + 1
-                end = field_type.find(']', start)
+                start = field_type.find("[") + 1
+                end = field_type.find("]", start)
                 if end > start:
                     return field_type[start:end].strip()
-        
+
         # Handle union types like User | None
         if "|" in field_type:
             # Extract the non-None type
@@ -204,17 +221,17 @@ class ModelDiscovery:
             for t in types:
                 if t != "None":
                     return t
-        
+
         # Fallback: use back_populates if available
         if back_populates:
             return back_populates.title()
-        
+
         return "Unknown"
 
     def _determine_relationship_type_from_field_type(self, field_type: str) -> str:
         """Determine relationship type from field type annotation."""
         field_type_lower = field_type.lower()
-        
+
         if "list[" in field_type_lower or "List[" in field_type_lower:
             return "one-to-many"
         elif "| None" in field_type_lower:
@@ -241,7 +258,7 @@ class ModelDiscovery:
             if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
                 field_name = node.target.id
                 # Skip private fields (starting with _)
-                if not field_name.startswith('_'):
+                if not field_name.startswith("_"):
                     fields.append(field_name)
         return fields
 

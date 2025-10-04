@@ -33,14 +33,14 @@
 Generate Mermaid ERD diagrams from SQLModel database models with automatic updates via git pre-commit hooks, integrated into project documentation standards and constitution requirements.
 
 ## Technical Context
-**Language/Version**: Python 3.11+  
-**Primary Dependencies**: SQLModel, Mermaid, Git hooks, pre-commit framework  
-**Storage**: File-based ERD output (Markdown/Mermaid format)  
-**Testing**: pytest for unit tests, pre-commit hooks for integration  
-**Target Platform**: Cross-platform (Linux/macOS/Windows)  
-**Project Type**: web (FastAPI + React full-stack template)  
-**Performance Goals**: Reasonable generation time for typical database schemas  
-**Constraints**: Must work in Docker environment, fail-fast error handling  
+**Language/Version**: Python 3.11+
+**Primary Dependencies**: SQLModel, Mermaid, Git hooks, pre-commit framework
+**Storage**: File-based ERD output (Markdown/Mermaid format)
+**Testing**: pytest for unit tests, pre-commit hooks for integration
+**Target Platform**: Cross-platform (Linux/macOS/Windows)
+**Project Type**: web (FastAPI + React full-stack template)
+**Performance Goals**: Reasonable generation time for typical database schemas
+**Constraints**: Must work in Docker environment, fail-fast error handling
 **Scale/Scope**: Single project template with extensible model support
 
 ## Constitution Check
@@ -162,7 +162,7 @@ docs/
 - Constitution updates → governance task [P]
 
 **Ordering Strategy**:
-- TDD order: Tests before implementation 
+- TDD order: Tests before implementation
 - Dependency order: Core generator → CLI → Integration → Documentation
 - Mark [P] for parallel execution (independent files)
 
@@ -173,8 +173,8 @@ docs/
 ## Phase 3+: Future Implementation
 *These phases are beyond the scope of the /plan command*
 
-**Phase 3**: Task execution (/tasks command creates tasks.md)  
-**Phase 4**: Implementation (execute tasks.md following constitutional principles)  
+**Phase 3**: Task execution (/tasks command creates tasks.md)
+**Phase 4**: Implementation (execute tasks.md following constitutional principles)
 **Phase 5**: Validation (run tests, execute quickstart.md, performance validation)
 
 ## Complexity Tracking

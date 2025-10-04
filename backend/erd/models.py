@@ -117,7 +117,9 @@ class ModelMetadata:
     @property
     def relationship_fields(self) -> list[FieldMetadata]:
         """Get all relationship fields in this model."""
-        return [field for field in self.fields if field.foreign_key_reference is not None]
+        return [
+            field for field in self.fields if field.foreign_key_reference is not None
+        ]
 
     def has_field(self, field_name: str) -> bool:
         """Check if this model has a field with the given name."""

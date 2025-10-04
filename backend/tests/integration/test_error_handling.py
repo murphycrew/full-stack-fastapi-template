@@ -37,7 +37,7 @@ class InvalidModel(SQLModel, table=True):
 
             # Should handle invalid syntax gracefully (not crash)
             result = generator.generate_erd()
-            
+
             # Should return minimal ERD when syntax is invalid
             assert isinstance(result, str)
             assert "erDiagram" in result
@@ -75,7 +75,7 @@ class AnotherBadModel(SQLModel, table=True):
 
             # Should handle malformed models gracefully (not crash)
             result = generator.generate_erd()
-            
+
             # Should return ERD even with malformed models
             assert isinstance(result, str)
             assert "erDiagram" in result
@@ -149,7 +149,7 @@ class ModelWithoutImport(SQLModel, table=True):
 
             # Should handle missing imports gracefully (not crash)
             result = generator.generate_erd()
-            
+
             # Should return minimal ERD when imports are missing
             assert isinstance(result, str)
             assert "erDiagram" in result
@@ -172,7 +172,10 @@ class ModelWithoutImport(SQLModel, table=True):
 
         # Should provide clear error message
         error_msg = str(exc_info.value)
-        assert any(keyword in error_msg.lower() for keyword in ["permission", "access", "read-only", "file system"])
+        assert any(
+            keyword in error_msg.lower()
+            for keyword in ["permission", "access", "read-only", "file system"]
+        )
 
     def test_memory_error_handling(self):
         """Test handling of memory errors during processing."""
@@ -327,7 +330,15 @@ class AnotherValidModel(SQLModel, table=True):
                 assert (
                     any(word in error_msg.lower() for word in actionable_words)
                     or expected_error_type.lower() in error_msg.lower()
-                    or any(phrase in error_msg.lower() for phrase in ["file not found", "models file not found", "permission denied", "read-only"])
+                    or any(
+                        phrase in error_msg.lower()
+                        for phrase in [
+                            "file not found",
+                            "models file not found",
+                            "permission denied",
+                            "read-only",
+                        ]
+                    )
                 )
 
     def test_error_context_preservation(self):
