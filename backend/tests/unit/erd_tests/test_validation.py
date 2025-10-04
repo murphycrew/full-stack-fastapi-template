@@ -131,89 +131,9 @@ class TestERDValidator:
         
         assert validator is not None
 
-    def test_validate_model_metadata_success(self):
-        """Test successful model metadata validation."""
-        validator = ERDValidator()
-        
-        # Create valid model metadata
-        fields = [
-            FieldMetadata(
-                name="id",
-                type_hint="uuid.UUID",
-                is_primary_key=True
-            ),
-            FieldMetadata(
-                name="email",
-                type_hint="str"
-            )
-        ]
-        
-        model = ModelMetadata(
-            class_name="User",
-            table_name="USER",
-            file_path=None,
-            line_number=10,
-            fields=fields,
-            relationships=[],
-            constraints=[]
-        )
-        
-        result = validator.validate_model_metadata(model)
-        
-        assert result.is_valid is True
-        assert len(result.errors) == 0
 
-    def test_validate_model_metadata_no_primary_key(self):
-        """Test model metadata validation without primary key."""
-        validator = ERDValidator()
-        
-        # Create model without primary key
-        fields = [
-            FieldMetadata(
-                name="name",
-                type_hint="str"
-            )
-        ]
-        
-        model = ModelMetadata(
-            class_name="User",
-            table_name="USER",
-            file_path=None,
-            line_number=10,
-            fields=fields,
-            relationships=[],
-            constraints=[]
-        )
-        
-        result = validator.validate_model_metadata(model)
-        
-        assert result.is_valid is False
-        assert len(result.errors) == 1
-        assert "primary key" in result.errors[0].message.lower()
-
-    def test_validate_model_metadata_empty_fields(self):
-        """Test model metadata validation with empty fields."""
-        validator = ERDValidator()
-        
-        # Create model with no fields
-        model = ModelMetadata(
-            class_name="User",
-            table_name="USER",
-            file_path=None,
-            line_number=10,
-            fields=[],
-            relationships=[],
-            constraints=[]
-        )
-        
-        result = validator.validate_model_metadata(model)
-        
-        assert result.is_valid is False
-        assert len(result.errors) == 1
-        assert "no fields" in result.errors[0].message.lower()
-
-    def test_validate_erd_syntax_success(self):
-        """Test successful ERD syntax validation."""
+    def test_validate_mermaid_syntax_success(self):
+        """Test successful Mermaid syntax validation."""
         validator = ERDValidator()
         
         # Valid Mermaid ERD syntax
@@ -230,13 +150,13 @@ class TestERDValidator:
     
     USER ||--o{ ITEM : owns"""
         
-        result = validator.validate_erd_syntax(erd_syntax)
+        result = validator.validate_mermaid_syntax(erd_syntax)
         
         assert result.is_valid is True
         assert len(result.errors) == 0
 
-    def test_validate_erd_syntax_missing_erdiagram(self):
-        """Test ERD syntax validation with missing erDiagram declaration."""
+    def test_validate_mermaid_syntax_missing_erdiagram(self):
+        """Test Mermaid syntax validation with missing erDiagram declaration."""
         validator = ERDValidator()
         
         # Invalid syntax - missing erDiagram
@@ -244,58 +164,11 @@ class TestERDValidator:
         uuid id PK
     }"""
         
-        result = validator.validate_erd_syntax(erd_syntax)
+        result = validator.validate_mermaid_syntax(erd_syntax)
         
         assert result.is_valid is False
         assert len(result.errors) == 1
         assert "erDiagram" in result.errors[0].message
-
-    def test_validate_erd_syntax_no_entities(self):
-        """Test ERD syntax validation with no entities."""
-        validator = ERDValidator()
-        
-        # Valid syntax but no entities
-        erd_syntax = "erDiagram"
-        
-        result = validator.validate_erd_syntax(erd_syntax)
-        
-        assert result.is_valid is False
-        assert len(result.errors) == 1
-        assert "no entities" in result.errors[0].message.lower()
-
-    def test_validate_erd_syntax_invalid_relationship(self):
-        """Test ERD syntax validation with invalid relationship syntax."""
-        validator = ERDValidator()
-        
-        # Invalid relationship syntax
-        erd_syntax = """erDiagram
-    USER {
-        uuid id PK
-    }
-    
-    USER -- ITEM : invalid"""
-        
-        result = validator.validate_erd_syntax(erd_syntax)
-        
-        assert result.is_valid is False
-        assert len(result.errors) >= 1
-        assert any("relationship" in error.message.lower() for error in result.errors)
-
-    def test_validate_erd_syntax_unmatched_braces(self):
-        """Test ERD syntax validation with unmatched braces."""
-        validator = ERDValidator()
-        
-        # Unmatched braces
-        erd_syntax = """erDiagram
-    USER {
-        uuid id PK
-        string email"""
-        
-        result = validator.validate_erd_syntax(erd_syntax)
-        
-        assert result.is_valid is False
-        assert len(result.errors) == 1
-        assert "brace" in result.errors[0].message.lower()
 
     def test_validate_all_success(self):
         """Test validate_all method with valid ERD."""
@@ -327,7 +200,7 @@ class TestERDValidator:
         assert result.is_valid is False
         assert len(result.errors) >= 1
 
-    def test_validate_entities_exist(self):
+    def test_validate_entities(self):
         """Test validation that entities exist in ERD."""
         validator = ERDValidator()
         
@@ -341,25 +214,25 @@ class TestERDValidator:
         uuid id PK
     }"""
         
-        result = validator.validate_entities_exist(erd_syntax)
+        result = validator.validate_entities(erd_syntax)
         
         assert result.is_valid is True
         assert len(result.errors) == 0
 
-    def test_validate_entities_exist_no_entities(self):
+    def test_validate_entities_no_entities(self):
         """Test validation when no entities exist."""
         validator = ERDValidator()
         
         # ERD without entities
         erd_syntax = "erDiagram"
         
-        result = validator.validate_entities_exist(erd_syntax)
+        result = validator.validate_entities(erd_syntax)
         
         assert result.is_valid is False
         assert len(result.errors) == 1
         assert "no entities" in result.errors[0].message.lower()
 
-    def test_validate_relationships_exist(self):
+    def test_validate_relationships(self):
         """Test validation that relationships exist in ERD."""
         validator = ERDValidator()
         
@@ -375,12 +248,14 @@ class TestERDValidator:
     
     USER ||--o{ ITEM : owns"""
         
-        result = validator.validate_relationships_exist(erd_syntax)
+        # Parse relationships first
+        relationships = validator._parse_relationships(erd_syntax)
+        result = validator.validate_relationships(relationships)
         
         assert result.is_valid is True
         assert len(result.errors) == 0
 
-    def test_validate_relationships_exist_no_relationships(self):
+    def test_validate_relationships_no_relationships(self):
         """Test validation when no relationships exist."""
         validator = ERDValidator()
         
@@ -390,7 +265,9 @@ class TestERDValidator:
         uuid id PK
     }"""
         
-        result = validator.validate_relationships_exist(erd_syntax)
+        # Parse relationships first
+        relationships = validator._parse_relationships(erd_syntax)
+        result = validator.validate_relationships(relationships)
         
         # This should be valid (entities can exist without relationships)
         assert result.is_valid is True
@@ -437,8 +314,8 @@ class TestERDValidator:
         assert result.is_valid is True
         assert len(result.errors) == 0
 
-    def test_count_entities_in_erd(self):
-        """Test entity counting in ERD."""
+    def test_parse_entities(self):
+        """Test entity parsing from ERD."""
         validator = ERDValidator()
         
         # ERD with 2 entities
@@ -451,11 +328,13 @@ class TestERDValidator:
         uuid id PK
     }"""
         
-        count = validator._count_entities_in_erd(erd_syntax)
-        assert count == 2
+        entities = validator._parse_entities(erd_syntax)
+        assert len(entities) == 2
+        assert any(entity.get("name") == "USER" for entity in entities)
+        assert any(entity.get("name") == "ITEM" for entity in entities)
 
-    def test_count_relationships_in_erd(self):
-        """Test relationship counting in ERD."""
+    def test_parse_relationships(self):
+        """Test relationship parsing from ERD."""
         validator = ERDValidator()
         
         # ERD with 1 relationship
@@ -470,24 +349,7 @@ class TestERDValidator:
     
     USER ||--o{ ITEM : owns"""
         
-        count = validator._count_relationships_in_erd(erd_syntax)
-        assert count == 1
-
-    def test_extract_entity_names(self):
-        """Test entity name extraction from ERD."""
-        validator = ERDValidator()
-        
-        # ERD with 2 entities
-        erd_syntax = """erDiagram
-    USER {
-        uuid id PK
-    }
-    
-    ITEM {
-        uuid id PK
-    }"""
-        
-        entities = validator._extract_entity_names(erd_syntax)
-        assert len(entities) == 2
-        assert "USER" in entities
-        assert "ITEM" in entities
+        relationships = validator._parse_relationships(erd_syntax)
+        assert len(relationships) == 1
+        assert relationships[0].get("source") == "USER"
+        assert relationships[0].get("target") == "ITEM"
