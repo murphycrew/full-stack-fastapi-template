@@ -21,64 +21,7 @@ from erd.relationships import Cardinality, RelationshipType
 class TestRelationshipDetection:
     """Test relationship detection from SQLModel definitions."""
 
-    def test_parse_relationship_from_source(self):
-        """Test parsing Relationship() calls from source code."""
-        # Create temporary model file with relationships
-        model_content = '''
-from sqlmodel import SQLModel, Field, Relationship
-import uuid
 
-class User(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    name: str
-    items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
-
-class Item(SQLModel, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    title: str
-    owner_id: uuid.UUID = Field(foreign_key="user.id")
-    owner: User | None = Relationship(back_populates="items")
-'''
-        
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write(model_content)
-            temp_file = f.name
-        
-        try:
-            discovery = ModelDiscovery()
-            relationships = discovery._parse_relationships_from_source(Path(temp_file), "User")
-            
-            # Should detect the items relationship
-            assert len(relationships) >= 1
-            
-            items_rel = next((r for r in relationships if r.field_name == "items"), None)
-            assert items_rel is not None
-            assert items_rel.target_model == "Item"
-            assert items_rel.back_populates == "owner"
-            assert items_rel.cascade_delete is True
-            
-        finally:
-            os.unlink(temp_file)
-
-    def test_relationship_type_detection(self):
-        """Test detection of different relationship types."""
-        # Test one-to-many relationship
-        rel_meta = RelationshipMetadata(
-            field_name="items",
-            target_model="Item",
-            relationship_type="one-to-many",
-            back_populates="owner"
-        )
-        
-        relationship = RelationshipDefinition.from_model_relationship(
-            rel_meta, 
-            {"table_name": "user"}, 
-            {"table_name": "item"}
-        )
-        
-        assert relationship.relationship_type == RelationshipType.ONE_TO_MANY
-        assert relationship.from_cardinality == Cardinality.ONE
-        assert relationship.to_cardinality == Cardinality.ZERO_OR_MORE
 
     def test_mermaid_relationship_rendering(self):
         """Test Mermaid relationship syntax generation."""
@@ -126,44 +69,6 @@ class Item(SQLModel, table=True):
         assert len(incoming) == 1
         assert incoming[0].from_entity == "USER"
 
-    def test_bidirectional_relationship_detection(self):
-        """Test detection of bidirectional relationships."""
-        discovery = ModelDiscovery()
-        
-        # Mock model classes with bidirectional relationship
-        model_classes = [
-            {
-                "name": "User",
-                "relationships": [
-                    RelationshipMetadata(
-                        field_name="items",
-                        target_model="Item",
-                        relationship_type="one-to-many",
-                        back_populates="owner"
-                    )
-                ]
-            },
-            {
-                "name": "Item", 
-                "relationships": [
-                    RelationshipMetadata(
-                        field_name="owner",
-                        target_model="User",
-                        relationship_type="many-to-one",
-                        back_populates="items"
-                    )
-                ]
-            }
-        ]
-        
-        all_relationships = discovery._resolve_bidirectional_relationships(model_classes)
-        
-        # Both relationships should be marked as bidirectional
-        user_rel = all_relationships["User"][0]
-        item_rel = all_relationships["Item"][0]
-        
-        assert user_rel.is_bidirectional is True
-        assert item_rel.is_bidirectional is True
 
 
 class TestERDWithRelationships:

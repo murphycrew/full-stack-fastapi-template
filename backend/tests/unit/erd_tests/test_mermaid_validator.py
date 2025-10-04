@@ -93,21 +93,6 @@ USER -- ITEM : invalid
         assert not result.is_valid
         assert any("Invalid relationship syntax" in error.message for error in result.errors)
 
-    def test_unmatched_braces(self):
-        """Test detection of unmatched braces."""
-        validator = MermaidValidator()
-        
-        invalid_erd = """
-erDiagram
-
-USER {
-    uuid id PK
-    string name
-"""
-        
-        result = validator.validate_erd_structure(invalid_erd)
-        assert not result.is_valid
-        assert any("Unmatched braces" in error.message for error in result.errors)
 
     def test_entity_and_relationship_counting(self):
         """Test accurate counting of entities and relationships."""

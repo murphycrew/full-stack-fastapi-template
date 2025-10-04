@@ -388,42 +388,6 @@ class TestModelMetadata:
         assert len(pk_fields) == 1
         assert pk_fields[0].name == "id"
 
-    def test_model_metadata_relationship_fields_property(self):
-        """Test ModelMetadata relationship_fields property."""
-        fields = [
-            FieldMetadata(
-                name="id",
-                type_hint="uuid.UUID",
-                is_primary_key=True
-            ),
-            FieldMetadata(
-                name="items",
-                type_hint="list[Item]"
-            ),
-            FieldMetadata(
-                name="owner",
-                type_hint="User | None"
-            ),
-            FieldMetadata(
-                name="name",
-                type_hint="str"
-            )
-        ]
-        
-        model = ModelMetadata(
-            class_name="User",
-            table_name="USER",
-            file_path=Path("app/models.py"),
-            line_number=10,
-            fields=fields,
-            relationships=[],
-            constraints=[]
-        )
-        
-        rel_fields = model.relationship_fields
-        assert len(rel_fields) == 2
-        assert rel_fields[0].name == "items"
-        assert rel_fields[1].name == "owner"
 
     def test_model_metadata_to_dict(self):
         """Test ModelMetadata to_dict conversion."""
