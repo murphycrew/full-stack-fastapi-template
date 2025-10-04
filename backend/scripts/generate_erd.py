@@ -4,7 +4,9 @@ CLI script for ERD generation.
 """
 
 import argparse
+import os
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -15,17 +17,43 @@ sys.path.insert(0, str(backend_dir))
 from erd import ERDGenerator
 
 
+def _is_ci_environment() -> bool:
+    """Check if we're running in a CI environment."""
+    ci_indicators = [
+        'CI', 'GITHUB_ACTIONS', 'GITLAB_CI', 'JENKINS_URL', 'BUILDKITE',
+        'CIRCLECI', 'TRAVIS', 'APPVEYOR', 'DRONE', 'SEMAPHORE'
+    ]
+    return any(os.getenv(indicator) for indicator in ci_indicators)
+
+
 def main():
     """Main CLI entry point for ERD generation."""
     parser = argparse.ArgumentParser(description="Generate Mermaid ERD diagrams from SQLModel definitions")
     parser.add_argument("--models-path", default="app/models.py", help="Path to SQLModel definitions")
-    parser.add_argument("--output-path", default="../docs/database/erd.mmd", help="Path for generated ERD documentation")
+    parser.add_argument("--output-path", default=None, help="Path for generated ERD documentation")
     parser.add_argument("--validate", action="store_true", help="Run validation checks on generated ERD")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
     parser.add_argument("--force", action="store_true", help="Force overwrite of existing output file")
     parser.add_argument("--backup", action="store_true", help="Create backup of existing ERD file before overwriting")
 
     args = parser.parse_args()
+    
+    # Set default output path based on environment
+    if args.output_path is None:
+        if _is_ci_environment():
+            # In CI, use a temporary directory that's guaranteed to be writable
+            temp_dir = Path(tempfile.gettempdir()) / "erd_output"
+            temp_dir.mkdir(exist_ok=True)
+            args.output_path = str(temp_dir / "erd.mmd")
+            # In CI, default to force mode to avoid conflicts
+            args.force = True
+        else:
+            # In development, use the docs directory
+            args.output_path = "../docs/database/erd.mmd"
+    
+    # If output path is explicitly provided and we're in CI, use force mode
+    elif _is_ci_environment():
+        args.force = True
 
     try:
         # Enhanced file system operations
@@ -72,6 +100,13 @@ def main():
     except PermissionError as e:
         print(f"Permission denied: {e}", file=sys.stderr)
         return 3
+    except OSError as e:
+        if "Read-only file system" in str(e) or "Permission denied" in str(e):
+            print(f"Permission denied: {e}", file=sys.stderr)
+            return 3
+        else:
+            print(f"OS error: {e}", file=sys.stderr)
+            return 2
     except Exception as e:
         print(f"ERD generation failed: {e}", file=sys.stderr)
         if args.verbose:
@@ -139,17 +174,17 @@ def _validate_models(generator: ERDGenerator, verbose: bool) -> bool:
         is_valid = generator.validate_models()
 
         if not is_valid:
-            if verbose:
-                print("Model validation issues found:")
-                # This could be enhanced to show specific validation errors
-                print("- Check that all models have primary keys")
-                print("- Verify field definitions are correct")
-                print("- Ensure foreign key references are valid")
+            print("Model validation issues found:")
+            # This could be enhanced to show specific validation errors
+            print("- Check that all models have primary keys")
+            print("- Verify field definitions are correct")
+            print("- Ensure foreign key references are valid")
+        else:
+            print("Model validation passed successfully")
 
         return is_valid
     except Exception as e:
-        if verbose:
-            print(f"Validation error: {e}")
+        print(f"Validation error: {e}")
         return False
 
 
