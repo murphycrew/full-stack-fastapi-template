@@ -1,16 +1,21 @@
 name: Add to Project
 
+# Disabled - this workflow is specific to the FastAPI organization
+# on:
+#   pull_request_target:
+#   issues:
+#     types:
+#       - opened
+#       - reopened
 on:
-  pull_request_target:
-  issues:
-    types:
-      - opened
-      - reopened
+  workflow_dispatch: # Manual trigger only
 
 jobs:
   add-to-project:
     name: Add to project
     runs-on: ubuntu-latest
+    # Disable this workflow - it's specific to the FastAPI organization
+    if: false
     steps:
       - uses: actions/add-to-project@v1.0.2
         with:
