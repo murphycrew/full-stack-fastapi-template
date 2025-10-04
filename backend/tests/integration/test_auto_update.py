@@ -76,8 +76,9 @@ class TestModel(SQLModel, table=True):
             ["git", "status", "--porcelain"], capture_output=True, text=True
         )
 
-        # Should show ERD file in staging area
-        assert str(erd_file) in status_result.stdout or status_result.returncode != 0
+        # Should show ERD file in staging area (git shows relative path without ../)
+        erd_file_relative = str(erd_file).replace("../", "")
+        assert erd_file_relative in status_result.stdout or status_result.returncode != 0
 
     def test_model_change_detection(self):
         """Test detection of model changes triggering ERD updates."""
@@ -177,7 +178,7 @@ class NewModel(SQLModel, table=True):
 
         # Create a generator with invalid configuration
         invalid_generator = ERDGenerator(
-            models_path="nonexistent_models.py", output_path="docs/database/erd.mmd"
+            models_path="nonexistent_models.py", output_path="../docs/database/erd.mmd"
         )
 
         # Attempt generation should fail gracefully

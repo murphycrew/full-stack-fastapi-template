@@ -102,6 +102,22 @@ class ERDGenerator:
 
             return mermaid_code
 
+        except (FileNotFoundError, PermissionError, OSError) as e:
+            # Preserve specific file system errors for integration tests
+            error_msg = f"ERD generation failed: {str(e)}"
+            # Create error output
+            error_output = ERDOutput(
+                mermaid_code="erDiagram\n    ERROR {\n        string message\n    }",
+                entities=[],
+                relationships=[],
+                validation_status="error",
+            )
+            error_output.mark_as_error(error_msg)
+            try:
+                self._write_output(error_output)
+            except:
+                pass  # Don't fail on error output write
+            raise e  # Re-raise the original exception
         except Exception as e:
             error_msg = f"ERD generation failed: {str(e)}"
             # Create error output

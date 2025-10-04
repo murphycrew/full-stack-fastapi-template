@@ -1,22 +1,15 @@
 %% Database ERD Diagram
-%% Generated: 2025-10-03T21:05:30.631939
-%% Version: Unknown
-%% Entities: 2
-%% Relationships: 1
-%% Status: invalid
+%% Generated: 2025-10-03T21:36:56.037292
+%% Version: 1.0
+%% Entities: 0
+%% Relationships: 0
+%% Status: error
+
+%% Error: ERD generation failed: Models file not found: nonexistent_models.py
 
 %% This diagram is automatically generated from SQLModel definitions
 
 erDiagram
-
-USER {
-    uuid id PK
-    string hashed_password
-}
-
-ITEM {
-    uuid id PK
-    uuid owner_id FK NOT NULL
-}
-
-USER ||--o{ ITEM : items
+    ERROR {
+        string message
+    }

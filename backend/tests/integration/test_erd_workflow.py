@@ -68,10 +68,12 @@ class TestERDGenerationWorkflow:
             # Should write to file
             assert Path(temp_output).exists()
 
-            # File content should match generated ERD
+            # File content should contain the generated ERD (with metadata)
             file_content = Path(temp_output).read_text()
-            assert file_content == result
             assert "erDiagram" in file_content
+            assert "%% Database ERD Diagram" in file_content
+            # The file contains metadata, but the result is pure Mermaid code
+            assert result in file_content or result.replace("\n", "") in file_content.replace("\n", "")
 
         finally:
             if os.path.exists(temp_output):
