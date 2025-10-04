@@ -40,12 +40,25 @@ class ValidationError:
         if self.line_number is None:
             self.line_number = -1
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert ValidationError to dictionary."""
+        severity_value = self.severity.value if hasattr(self.severity, 'value') else str(self.severity)
+        return {
+            "message": self.message,
+            "severity": severity_value,
+            "line_number": self.line_number,
+            "field_name": self.field_name,
+            "entity_name": self.entity_name,
+            "error_code": self.error_code,
+            "suggestions": self.suggestions,
+        }
+
 
 @dataclass
 class ValidationResult:
     """Result of ERD validation."""
 
-    is_valid: bool
+    is_valid: bool = True
     errors: list[ValidationError] = field(default_factory=list)
     warnings: list[ValidationError] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -53,7 +66,14 @@ class ValidationResult:
     def add_error(self, error: ValidationError) -> None:
         """Add a validation error."""
         self.errors.append(error)
-        if error.severity == ErrorSeverity.CRITICAL:
+        # Check if severity is string or enum
+        severity = error.severity
+        if hasattr(severity, 'value'):
+            severity_value = severity.value
+        else:
+            severity_value = str(severity)
+        
+        if severity_value in ['critical', 'error']:
             self.is_valid = False
 
     def add_warning(self, warning: ValidationError) -> None:
@@ -63,6 +83,15 @@ class ValidationResult:
     def has_critical_errors(self) -> bool:
         """Check if there are any critical errors."""
         return any(error.severity == ErrorSeverity.CRITICAL for error in self.errors)
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert ValidationResult to dictionary."""
+        return {
+            "is_valid": self.is_valid,
+            "errors": [error.to_dict() for error in self.errors],
+            "warnings": [warning.to_dict() for warning in self.warnings],
+            "metadata": self.metadata,
+        }
 
 
 @dataclass
@@ -97,12 +126,17 @@ class ERDValidator:
         result = ValidationResult(is_valid=True)
 
         try:
+            # First validate basic Mermaid syntax
+            syntax_result = self.validate_mermaid_syntax(erd_content)
+            result.errors.extend(syntax_result.errors)
+            result.warnings.extend(syntax_result.warnings)
+
             # Parse entities and relationships for validation
             entities = self._parse_entities(erd_content)
             relationships = self._parse_relationships(erd_content)
 
             # Validate entities exist
-            entities_result = self.validate_entities_exist(erd_content)
+            entities_result = self.validate_entities(erd_content)
             result.errors.extend(entities_result.errors)
             result.warnings.extend(entities_result.warnings)
 
@@ -314,15 +348,14 @@ class ERDValidator:
 
             # Relationship line (contains --)
             if "--" in line and not line.startswith("erDiagram"):
-                parts = line.split("--")
-                if len(parts) >= 2:
-                    from_part = parts[0].strip()
-                    to_part = parts[1].strip()
-
-                    # Parse cardinality and labels
-                    from_entity = from_part.split()[0] if from_part.split() else ""
-                    to_entity = to_part.split()[0] if to_part.split() else ""
-
+                # Split on the relationship pattern, but be more careful about parsing
+                # Look for patterns like "ENTITY1 ||--o{ ENTITY2 : label"
+                import re
+                match = re.match(r'(\w+)\s+\|?\|\-?\-?[o\}]*\{\s*(\w+)', line)
+                if match:
+                    from_entity = match.group(1)
+                    to_entity = match.group(2)
+                    
                     relationship = {
                         "from_entity": from_entity,
                         "to_entity": to_entity,

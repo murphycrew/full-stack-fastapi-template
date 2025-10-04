@@ -25,6 +25,19 @@ class FieldMetadata:
         if self.constraints is None:
             self.constraints = []
 
+    def to_dict(self) -> dict[str, Any]:
+        """Convert FieldMetadata to dictionary."""
+        return {
+            "name": self.name,
+            "type_hint": self.type_hint,
+            "is_primary_key": self.is_primary_key,
+            "is_foreign_key": self.is_foreign_key,
+            "is_nullable": self.is_nullable,
+            "default_value": self.default_value,
+            "constraints": self.constraints,
+            "foreign_key_reference": self.foreign_key_reference,
+        }
+
 
 @dataclass
 class RelationshipMetadata:
@@ -95,6 +108,20 @@ class ModelMetadata:
             if field.name == field_name:
                 return field
         return None
+
+    @property
+    def primary_key_fields(self) -> list[FieldMetadata]:
+        """Get all primary key fields in this model."""
+        return [field for field in self.fields if field.is_primary_key]
+
+    @property
+    def relationship_fields(self) -> list[FieldMetadata]:
+        """Get all relationship fields in this model."""
+        return [field for field in self.fields if field.foreign_key_reference is not None]
+
+    def has_field(self, field_name: str) -> bool:
+        """Check if this model has a field with the given name."""
+        return any(field.name == field_name for field in self.fields)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert model metadata to dictionary for serialization."""

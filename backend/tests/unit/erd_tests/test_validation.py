@@ -351,5 +351,5 @@ class TestERDValidator:
         
         relationships = validator._parse_relationships(erd_syntax)
         assert len(relationships) == 1
-        assert relationships[0].get("source") == "USER"
-        assert relationships[0].get("target") == "ITEM"
+        assert relationships[0].get("from_entity") == "USER"
+        assert relationships[0].get("to_entity") == "ITEM"
