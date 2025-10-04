@@ -14,7 +14,7 @@ class TestPreCommitHook:
 
     def test_pre_commit_config_exists(self):
         """Test that pre-commit configuration includes ERD generation hook."""
-        config_file = Path(".pre-commit-config.yaml")
+        config_file = Path("../.pre-commit-config.yaml")  # Config is at project root
         assert config_file.exists()
 
         content = config_file.read_text()
@@ -155,7 +155,8 @@ class TestModel(SQLModel, table=True):
 
             # Should fail gracefully with clear error message
             assert result.returncode == 1
-            assert result.stderr  # Should have error output
+            # Pre-commit puts error output in stdout, not stderr
+            assert result.stdout or result.stderr  # Should have error output
 
         finally:
             os.unlink(temp_file)
