@@ -13,12 +13,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from erd import (
     RelationshipDefinition,
     RelationshipManager,
-    RelationshipType,
-    Cardinality,
     ModelDiscovery,
     RelationshipMetadata,
 )
-
+from erd.relationships import Cardinality, RelationshipType
 
 class TestRelationshipDetection:
     """Test relationship detection from SQLModel definitions."""
@@ -173,7 +171,7 @@ class TestERDWithRelationships:
 
     def test_erd_generation_with_relationships(self):
         """Test that ERD generation includes relationship lines."""
-        from app.erd_generator import ERDGenerator
+        from erd.generator import ERDGenerator
         
         # Create temporary model file
         model_content = '''
@@ -211,7 +209,7 @@ class Item(SQLModel, table=True):
 
     def test_relationship_field_filtering(self):
         """Test that relationship fields are filtered from entity field lists."""
-        from app.erd_generator import ERDGenerator
+        from erd.generator import ERDGenerator
         
         # Create temporary model file with relationship fields
         model_content = '''
