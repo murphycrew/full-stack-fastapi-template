@@ -38,6 +38,9 @@ def _is_ci_environment() -> bool:
 
 def main():
     """Main CLI entry point for ERD generation."""
+    # Configure logging to output to stdout for CLI
+    logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
+
     parser = argparse.ArgumentParser(
         description="Generate Mermaid ERD diagrams from SQLModel definitions"
     )
@@ -82,11 +85,11 @@ def main():
     try:
         # Enhanced file system operations
         if not _validate_input_path(args.models_path):
-            logging.error(f"Invalid models path: {args.models_path}")
+            sys.stderr.write(f"Invalid models path: {args.models_path}\n")
             return 2
 
         if not _prepare_output_path(args.output_path, args.force, args.backup):
-            logging.error(f"Failed to prepare output path: {args.output_path}")
+            sys.stderr.write(f"Failed to prepare output path: {args.output_path}\n")
             return 3
 
         # Initialize ERD generator
@@ -120,20 +123,20 @@ def main():
         return 0
 
     except FileNotFoundError as e:
-        logging.error(f"File not found: {e}")
+        sys.stderr.write(f"File not found: {e}\n")
         return 2
     except PermissionError as e:
-        logging.error(f"Permission denied: {e}")
+        sys.stderr.write(f"Permission denied: {e}\n")
         return 3
     except OSError as e:
         if "Read-only file system" in str(e) or "Permission denied" in str(e):
-            logging.error(f"Permission denied: {e}")
+            sys.stderr.write(f"Permission denied: {e}\n")
             return 3
         else:
-            logging.error(f"OS error: {e}")
+            sys.stderr.write(f"OS error: {e}\n")
             return 2
     except Exception as e:
-        logging.error(f"ERD generation failed: {e}")
+        sys.stderr.write(f"ERD generation failed: {e}\n")
         if args.verbose:
             import traceback
 
@@ -210,7 +213,7 @@ def _validate_models(generator: ERDGenerator, verbose: bool = False) -> bool:  #
 
         return is_valid
     except Exception as e:
-        logging.error(f"Validation error: {e}")
+        sys.stderr.write(f"Validation error: {e}\n")
         return False
 
 
