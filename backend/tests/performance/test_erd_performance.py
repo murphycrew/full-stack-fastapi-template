@@ -252,8 +252,11 @@ class TestERDPerformance:
 
     def test_performance_memory_usage(self):
         """Test memory usage with large schema."""
-        import psutil
-        import os
+        try:
+            import psutil
+            import os
+        except ImportError:
+            pytest.skip("psutil not available for memory testing")
         
         generator = ERDGenerator()
         process = psutil.Process(os.getpid())

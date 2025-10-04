@@ -34,7 +34,8 @@ from .validation import (
     ValidationResult,
     ValidationError,
     ErrorSeverity,
-    ValidationMode
+    ValidationMode,
+    ValidationConfig
 )
 from .output import ERDOutput
 from .entities import EntityDefinition
@@ -54,6 +55,7 @@ __all__ = [
     "ValidationError",
     "ErrorSeverity",
     "ValidationMode",
+    "ValidationConfig",
     "ERDOutput",
     "EntityDefinition",
     "RelationshipDefinition",

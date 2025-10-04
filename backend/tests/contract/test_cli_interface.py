@@ -30,8 +30,15 @@ class TestCLIInterface:
 
     def test_generate_erd_default_behavior(self):
         """Test default ERD generation without options."""
+        import os
+        
+        # Use force flag in local environment to avoid file conflicts
+        cmd = [sys.executable, "scripts/generate_erd.py"]
+        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+            cmd.append("--force")
+            
         result = subprocess.run(
-            [sys.executable, "scripts/generate_erd.py"],
+            cmd,
             capture_output=True,
             text=True,
         )
@@ -42,15 +49,23 @@ class TestCLIInterface:
 
     def test_generate_erd_custom_paths(self):
         """Test ERD generation with custom model and output paths."""
+        import os
+        
+        cmd = [
+            sys.executable,
+            "scripts/generate_erd.py",
+            "--models-path",
+            "app/models.py",
+            "--output-path",
+            "../docs/database/erd.mmd",
+        ]
+        
+        # Use force flag in local environment to avoid file conflicts
+        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+            cmd.append("--force")
+            
         result = subprocess.run(
-            [
-                sys.executable,
-                "scripts/generate_erd.py",
-                "--models-path",
-                "app/models.py",
-                "--output-path",
-                "../docs/database/erd.mmd",
-            ],
+            cmd,
             capture_output=True,
             text=True,
         )
@@ -59,8 +74,15 @@ class TestCLIInterface:
 
     def test_generate_erd_validate_flag(self):
         """Test ERD generation with validation flag."""
+        import os
+        
+        cmd = [sys.executable, "scripts/generate_erd.py", "--validate"]
+        # Use force flag in local environment to avoid file conflicts
+        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+            cmd.append("--force")
+            
         result = subprocess.run(
-            [sys.executable, "scripts/generate_erd.py", "--validate"],
+            cmd,
             capture_output=True,
             text=True,
         )
@@ -69,8 +91,15 @@ class TestCLIInterface:
 
     def test_generate_erd_verbose_flag(self):
         """Test ERD generation with verbose flag."""
+        import os
+        
+        cmd = [sys.executable, "scripts/generate_erd.py", "--verbose"]
+        # Use force flag in local environment to avoid file conflicts
+        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+            cmd.append("--force")
+            
         result = subprocess.run(
-            [sys.executable, "scripts/generate_erd.py", "--verbose"],
+            cmd,
             capture_output=True,
             text=True,
         )
@@ -79,9 +108,16 @@ class TestCLIInterface:
 
     def test_cli_exit_codes(self):
         """Test CLI exit codes according to contract."""
+        import os
+        
         # Test successful generation
+        cmd = [sys.executable, "scripts/generate_erd.py"]
+        # Use force flag in local environment to avoid file conflicts
+        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+            cmd.append("--force")
+            
         result = subprocess.run(
-            [sys.executable, "scripts/generate_erd.py"],
+            cmd,
             capture_output=True,
             text=True,
         )
@@ -115,8 +151,15 @@ class TestCLIInterface:
 
     def test_validate_erd_command(self):
         """Test validate-erd command functionality."""
+        import os
+        
+        cmd = [sys.executable, "scripts/generate_erd.py", "--validate"]
+        # Use force flag in local environment to avoid file conflicts
+        if not (os.getenv('CI') or os.getenv('GITHUB_ACTIONS')):
+            cmd.append("--force")
+            
         result = subprocess.run(
-            [sys.executable, "scripts/generate_erd.py", "--validate"],
+            cmd,
             capture_output=True,
             text=True,
         )
