@@ -1,8 +1,7 @@
+# Implementation Plan: Mermaid ERD Diagram Documentation
 
-# Implementation Plan: [FEATURE]
-
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `001-as-a-first` | **Date**: 2024-12-19 | **Spec**: `/specs/001-as-a-first/spec.md`
+**Input**: Feature specification from `/specs/001-as-a-first/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,34 +30,33 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-[Extract from feature spec: primary requirement + technical approach from research]
+Generate Mermaid ERD diagrams from SQLModel database models with automatic updates via git pre-commit hooks, integrated into project documentation standards and constitution requirements.
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: Python 3.11+
+**Primary Dependencies**: SQLModel, Mermaid, Git hooks, pre-commit framework
+**Storage**: File-based ERD output (Markdown/Mermaid format)
+**Testing**: pytest for unit tests, pre-commit hooks for integration
+**Target Platform**: Cross-platform (Linux/macOS/Windows)
+**Project Type**: web (FastAPI + React full-stack template)
+**Performance Goals**: Reasonable generation time for typical database schemas
+**Constraints**: Must work in Docker environment, fail-fast error handling
+**Scale/Scope**: Single project template with extensible model support
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Full-Stack Integration**: Does this feature require backend API, frontend UI, database changes, and tests?
-**Test-Driven Development**: Are test scenarios defined before implementation planning?
-**Auto-Generated Client**: Will API changes require frontend client regeneration?
-**Docker-First**: Does the feature work in containerized environment?
-**Security by Default**: Are authentication, validation, and security considerations included?
-**ERD Documentation**: Will database schema changes require ERD updates and validation?
+**Full-Stack Integration**: ✅ YES - Requires backend model parsing, documentation updates, and git workflow integration
+**Test-Driven Development**: ✅ YES - Test scenarios defined for ERD generation, validation, and error handling
+**Auto-Generated Client**: ❌ NO - This is documentation generation, not API client generation
+**Docker-First**: ✅ YES - ERD generation must work in containerized environment
+**Security by Default**: ✅ YES - Input validation for model parsing, secure file handling
 
 ## Project Structure
 
 ### Documentation (this feature)
 ```
-specs/[###-feature]/
+specs/001-as-a-first/
 ├── plan.md              # This file (/plan command output)
 ├── research.md          # Phase 0 output (/plan command)
 ├── data-model.md        # Phase 1 output (/plan command)
@@ -68,63 +66,50 @@ specs/[###-feature]/
 ```
 
 ### Source Code (repository root)
-<!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
--->
 ```
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
-
-tests/
-├── contract/
-├── integration/
-└── unit/
-
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
 backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
+├── app/
+│   ├── models.py        # Existing SQLModel definitions
+│   └── erd_generator.py # New ERD generation module
+├── scripts/
+│   └── generate_erd.py  # CLI script for ERD generation
 └── tests/
+    ├── unit/
+    │   └── test_erd_generator.py
+    └── integration/
+        └── test_erd_workflow.py
 
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
+.git/
+└── hooks/
+    └── pre-commit       # Updated to include ERD generation
 
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
+docs/
+└── database/
+    └── erd.md          # Generated ERD documentation
 
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+.specify/
+├── memory/
+│   └── constitution.md  # Updated with ERD requirements
+└── templates/
+    ├── plan-template.md # Updated with ERD checks
+    └── tasks-template.md # Updated with ERD maintenance
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Structure Decision**: Web application structure with backend focus, documentation integration, and git workflow enhancement
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
-   - For each NEEDS CLARIFICATION → research task
-   - For each dependency → best practices task
-   - For each integration → patterns task
+   - Mermaid ERD syntax and best practices for SQLModel relationships
+   - Git pre-commit hook integration patterns
+   - SQLModel introspection and parsing techniques
+   - Documentation integration approaches
 
 2. **Generate and dispatch research agents**:
    ```
-   For each unknown in Technical Context:
-     Task: "Research {unknown} for {feature context}"
-   For each technology choice:
-     Task: "Find best practices for {tech} in {domain}"
+   Task: "Research Mermaid ERD syntax for SQLModel relationships and foreign keys"
+   Task: "Find best practices for git pre-commit hooks with Python projects"
+   Task: "Research SQLModel introspection patterns for automatic schema extraction"
+   Task: "Find documentation integration patterns for auto-generated diagrams"
    ```
 
 3. **Consolidate findings** in `research.md` using format:
@@ -138,32 +123,29 @@ directories captured above]
 *Prerequisites: research.md complete*
 
 1. **Extract entities from feature spec** → `data-model.md`:
-   - Entity name, fields, relationships
-   - Validation rules from requirements
-   - State transitions if applicable
+   - ERD Generator entity with parsing capabilities
+   - Model Metadata entity for SQLModel introspection
+   - ERD Output entity for Mermaid diagram structure
 
 2. **Generate API contracts** from functional requirements:
-   - For each user action → endpoint
-   - Use standard REST/GraphQL patterns
-   - Output OpenAPI/GraphQL schema to `/contracts/`
+   - CLI interface for manual ERD generation
+   - Pre-commit hook integration contract
+   - Validation contract for ERD accuracy
 
 3. **Generate contract tests** from contracts:
-   - One test file per endpoint
-   - Assert request/response schemas
-   - Tests must fail (no implementation yet)
+   - CLI command tests
+   - Pre-commit hook integration tests
+   - ERD validation tests
 
 4. **Extract test scenarios** from user stories:
-   - Each story → integration test scenario
-   - Quickstart test = story validation steps
+   - ERD generation workflow test
+   - Automatic update workflow test
+   - Error handling workflow test
 
 5. **Update agent file incrementally** (O(1) operation):
    - Run `.specify/scripts/bash/update-agent-context.sh cursor`
      **IMPORTANT**: Execute it exactly as specified above. Do not add or remove any arguments.
-   - If exists: Add only NEW tech from current plan
-   - Preserve manual additions between markers
-   - Update recent changes (keep last 3)
-   - Keep under 150 lines for token efficiency
-   - Output to repository root
+   - Add ERD generation context to agent guidance
 
 **Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
 
@@ -173,17 +155,18 @@ directories captured above]
 **Task Generation Strategy**:
 - Load `.specify/templates/tasks-template.md` as base
 - Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P]
-- Each user story → integration test task
-- Implementation tasks to make tests pass
+- ERD Generator module → implementation task [P]
+- CLI interface → implementation task [P]
+- Pre-commit hook → integration task
+- Documentation updates → documentation task [P]
+- Constitution updates → governance task [P]
 
 **Ordering Strategy**:
 - TDD order: Tests before implementation
-- Dependency order: Models before services before UI
+- Dependency order: Core generator → CLI → Integration → Documentation
 - Mark [P] for parallel execution (independent files)
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Estimated Output**: 15-20 numbered, ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -199,26 +182,24 @@ directories captured above]
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
-
+| Auto-Generated Client: NO | This feature generates documentation, not API clients | N/A - not applicable to documentation generation |
 
 ## Progress Tracking
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [ ] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [ ] Initial Constitution Check: PASS
-- [ ] Post-Design Constitution Check: PASS
-- [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+- [x] Initial Constitution Check: PASS
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved
+- [x] Complexity deviations documented
 
 ---
 *Based on Constitution v1.0.0 - See `/memory/constitution.md`*
