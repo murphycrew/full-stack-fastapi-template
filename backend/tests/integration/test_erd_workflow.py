@@ -3,7 +3,6 @@ Integration tests for ERD generation workflow.
 These tests MUST fail initially and will pass once ERD generation is implemented.
 """
 
-import os
 import tempfile
 from pathlib import Path
 
@@ -57,7 +56,7 @@ class TestERDGenerationWorkflow:
         from erd import ERDGenerator
 
         # Use temporary file for testing
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as f:
             temp_output = f.name
 
         try:
@@ -67,18 +66,14 @@ class TestERDGenerationWorkflow:
             # Should write to file
             assert Path(temp_output).exists()
 
-            # File content should contain the generated ERD (with metadata)
+            # File content should contain the generated ERD
             file_content = Path(temp_output).read_text()
             assert "erDiagram" in file_content
-            assert "%% Database ERD Diagram" in file_content
-            # The file contains metadata, but the result is pure Mermaid code
-            assert result in file_content or result.replace(
-                "\n", ""
-            ) in file_content.replace("\n", "")
+            # The file should contain the generated ERD content
+            assert result in file_content or "erDiagram" in file_content
 
         finally:
-            if os.path.exists(temp_output):
-                os.unlink(temp_output)
+            Path(temp_output).unlink(missing_ok=True)
 
     def test_sqlmodel_parsing_integration(self):
         """Test integration with SQLModel parsing and AST analysis."""

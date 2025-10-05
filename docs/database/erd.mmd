@@ -1,5 +1,5 @@
 %% Database ERD Diagram
-%% Generated: 2025-10-03T21:53:53.097286
+%% Generated: 2025-10-04T21:53:43.171142
 %% Version: Unknown
 %% Entities: 2
 %% Relationships: 1
@@ -11,12 +11,13 @@ erDiagram
 
 USER {
     uuid id PK
-    string hashed_password
+    string name
 }
 
 ITEM {
     uuid id PK
-    uuid owner_id FK NOT NULL
+    string title
+    uuid owner_id FK
 }
 
 USER ||--o{ ITEM : items

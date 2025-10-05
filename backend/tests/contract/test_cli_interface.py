@@ -50,27 +50,35 @@ class TestCLIInterface:
     def test_generate_erd_custom_paths(self):
         """Test ERD generation with custom model and output paths."""
         import os
+        import tempfile
 
-        cmd = [
-            sys.executable,
-            "scripts/generate_erd.py",
-            "--models-path",
-            "app/models.py",
-            "--output-path",
-            "../docs/database/erd.mmd",
-        ]
+        # Use temporary file for testing
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as f:
+            temp_output = f.name
 
-        # Use force flag in local environment to avoid file conflicts
-        if not (os.getenv("CI") or os.getenv("GITHUB_ACTIONS")):
-            cmd.append("--force")
+        try:
+            cmd = [
+                sys.executable,
+                "scripts/generate_erd.py",
+                "--models-path",
+                "app/models.py",
+                "--output-path",
+                temp_output,
+            ]
 
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-        )
+            # Use force flag in local environment to avoid file conflicts
+            if not (os.getenv("CI") or os.getenv("GITHUB_ACTIONS")):
+                cmd.append("--force")
 
-        assert result.returncode == 0
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+            )
+
+            assert result.returncode == 0
+        finally:
+            Path(temp_output).unlink(missing_ok=True)
 
     def test_generate_erd_validate_flag(self):
         """Test ERD generation with validation flag."""
@@ -189,34 +197,36 @@ class TestCLIInterface:
     def test_output_file_creation(self):
         """Test that ERD output file is created."""
         import os
+        import tempfile
 
-        # In CI, the file is created in a temporary directory
-        if os.getenv("CI") or os.getenv("GITHUB_ACTIONS"):
-            # For CI, we can't easily check the specific file location
-            # Just verify the command succeeds
+        # Use temporary file for testing in all environments
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as f:
+            temp_output = f.name
+
+        try:
+            cmd = [
+                sys.executable,
+                "scripts/generate_erd.py",
+                "--output-path",
+                temp_output,
+            ]
+
+            # Use force flag in local environment to avoid file conflicts
+            if not (os.getenv("CI") or os.getenv("GITHUB_ACTIONS")):
+                cmd.append("--force")
+
+            # Test that the CLI creates the output file
             result = subprocess.run(
-                [sys.executable, "scripts/generate_erd.py"],
+                cmd,
                 capture_output=True,
                 text=True,
             )
-            assert result.returncode == 0
-        else:
-            # For local development, check the specific file
-            output_file = Path("../docs/database/erd.mmd")
-
-            # Clean up any existing file
-            if output_file.exists():
-                output_file.unlink()
-
-            result = subprocess.run(
-                [sys.executable, "scripts/generate_erd.py"],
-                capture_output=True,
-                text=True,
-            )
 
             assert result.returncode == 0
-            assert output_file.exists()
+            assert Path(temp_output).exists()
 
             # File should contain Mermaid ERD syntax
-            content = output_file.read_text()
+            content = Path(temp_output).read_text()
             assert "erDiagram" in content or "mermaid" in content.lower()
+        finally:
+            Path(temp_output).unlink(missing_ok=True)

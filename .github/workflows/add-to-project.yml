@@ -1,10 +1,24 @@
-# This workflow has been disabled because it's specific to the FastAPI organization
-# and requires a PROJECTS_TOKEN secret that doesn't exist in user repositories.
-#
-# Original workflow attempted to add PRs and issues to:
-# https://github.com/orgs/fastapi/projects/2
-#
-# To re-enable for your own project board, you would need to:
-# 1. Create a Personal Access Token with 'project' scope
-# 2. Add it as PROJECTS_TOKEN secret
-# 3. Update the project-url to your own project board
+name: Add to Project
+
+on:
+  workflow_dispatch:  # Manual trigger only - no automatic triggers
+  # pull_request_target:  # Commented out to prevent automatic execution
+  # issues:              # Commented out to prevent automatic execution
+  #   types:
+  #     - opened
+  #     - reopened
+
+jobs:
+  add-to-project:
+    name: Add to project (No-op)
+    runs-on: ubuntu-latest
+    # Skip execution - this workflow is specific to the FastAPI organization
+    if: false
+    steps:
+      - name: No-op step
+        run: echo "This workflow is disabled - it was specific to the FastAPI organization"
+      # Original step commented out to prevent failures:
+      # - uses: actions/add-to-project@v1.0.2
+      #   with:
+      #     project-url: https://github.com/orgs/fastapi/projects/2
+      #     github-token: ${{ secrets.PROJECTS_TOKEN }}
