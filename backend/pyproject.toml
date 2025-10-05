@@ -33,6 +33,7 @@ dev-dependencies = [
     "coverage<8.0.0,>=7.4.3",
     "pytest-cov>=6.3.0",
     "black>=25.9.0",
+    "psutil>=7.1.0",
 ]
 
 [build-system]

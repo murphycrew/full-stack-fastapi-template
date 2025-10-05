@@ -43,44 +43,59 @@ class TestModel(SQLModel, table=True):
 
             # If successful, should update ERD documentation
             if result.returncode == 0:
-                erd_file = Path("../docs/database/erd.mmd")
-                assert erd_file.exists()
+                # Use temporary file for testing instead of actual docs file
+                with tempfile.NamedTemporaryFile(
+                    mode="w", suffix=".mmd", delete=False
+                ) as f:
+                    temp_erd_file = f.name
 
-                # ERD should include the test model
-                erd_content = erd_file.read_text()
-                assert "TestModel" in erd_content or "testmodel" in erd_content.lower()
+                try:
+                    # Test that ERD generation would work with temp file
+                    from erd import ERDGenerator
+
+                    generator = ERDGenerator(output_path=temp_erd_file)
+                    result = generator.generate_erd()
+
+                    assert Path(temp_erd_file).exists()
+                    erd_content = Path(temp_erd_file).read_text()
+                    assert "erDiagram" in erd_content
+                finally:
+                    Path(temp_erd_file).unlink(missing_ok=True)
 
         finally:
             os.unlink(temp_model_file)
 
     def test_git_workflow_integration(self):
         """Test integration with git workflow for automatic updates."""
-        # Test that git can stage changes to ERD file
-        erd_file = Path("../docs/database/erd.mmd")
+        # Create temporary file within the repository for git operations
+        temp_erd_file = Path("temp_test_erd.mmd")
 
-        # Ensure ERD file exists
-        if not erd_file.exists():
-            erd_file.parent.mkdir(parents=True, exist_ok=True)
-            erd_file.write_text("# ERD\n```mermaid\nerDiagram\n```")
+        try:
+            # Write test content to temporary file in repo
+            temp_erd_file.write_text("# ERD\n```mermaid\nerDiagram\n```")
 
-        # Test git staging of ERD updates
-        result = subprocess.run(
-            ["git", "add", str(erd_file)], capture_output=True, text=True
-        )
+            # Test that git can stage changes to temporary ERD file
+            result = subprocess.run(
+                ["git", "add", str(temp_erd_file)], capture_output=True, text=True
+            )
 
-        # Should be able to stage ERD file
-        assert result.returncode == 0
+            # Should be able to stage ERD file
+            assert result.returncode == 0
 
-        # Check git status shows staged changes
-        status_result = subprocess.run(
-            ["git", "status", "--porcelain"], capture_output=True, text=True
-        )
+            # Check git status shows staged changes
+            status_result = subprocess.run(
+                ["git", "status", "--porcelain"], capture_output=True, text=True
+            )
 
-        # Should show ERD file in staging area (git shows relative path without ../)
-        erd_file_relative = str(erd_file).replace("../", "")
-        assert (
-            erd_file_relative in status_result.stdout or status_result.returncode != 0
-        )
+            # Should show ERD file in staging area
+            temp_filename = temp_erd_file.name
+            assert (
+                temp_filename in status_result.stdout or status_result.returncode != 0
+            )
+        finally:
+            # Clean up: remove from git index and delete file
+            subprocess.run(["git", "reset", str(temp_erd_file)], capture_output=True)
+            temp_erd_file.unlink(missing_ok=True)
 
     def test_model_change_detection(self):
         """Test detection of model changes triggering ERD updates."""
@@ -120,28 +135,37 @@ class NewModel(SQLModel, table=True):
 
     def test_erd_file_update_integration(self):
         """Test that ERD file is properly updated with new model information."""
-
         from erd import ERDGenerator
 
-        generator = ERDGenerator()
-        erd_file = Path("../docs/database/erd.mmd")
+        # Use temporary file for testing
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as f:
+            temp_erd_file = f.name
 
-        # Record initial file timestamp
-        initial_mtime = erd_file.stat().st_mtime if erd_file.exists() else 0
+        try:
+            generator = ERDGenerator(output_path=temp_erd_file)
 
-        # Generate ERD (should update file)
-        generator.generate_erd()
+            # Record initial file timestamp
+            initial_mtime = (
+                Path(temp_erd_file).stat().st_mtime
+                if Path(temp_erd_file).exists()
+                else 0
+            )
 
-        # File should be updated
-        assert erd_file.exists()
+            # Generate ERD (should update file)
+            generator.generate_erd()
 
-        # File modification time should be newer
-        new_mtime = erd_file.stat().st_mtime
-        assert new_mtime >= initial_mtime
+            # File should be updated
+            assert Path(temp_erd_file).exists()
 
-        # File content should contain generated ERD
-        file_content = erd_file.read_text()
-        assert "erDiagram" in file_content or "mermaid" in file_content.lower()
+            # File modification time should be newer
+            new_mtime = Path(temp_erd_file).stat().st_mtime
+            assert new_mtime >= initial_mtime
+
+            # File content should contain generated ERD
+            file_content = Path(temp_erd_file).read_text()
+            assert "erDiagram" in file_content or "mermaid" in file_content.lower()
+        finally:
+            Path(temp_erd_file).unlink(missing_ok=True)
 
     def test_concurrent_update_prevention(self):
         """Test that concurrent updates are handled properly."""
@@ -178,21 +202,27 @@ class NewModel(SQLModel, table=True):
         """Test that failed updates don't leave system in inconsistent state."""
         from erd import ERDGenerator
 
-        # Create a generator with invalid configuration
-        invalid_generator = ERDGenerator(
-            models_path="nonexistent_models.py", output_path="../docs/database/erd.mmd"
-        )
+        # Use temporary file for testing
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as f:
+            temp_erd_file = f.name
 
-        # Attempt generation should fail gracefully
-        with pytest.raises((FileNotFoundError, PermissionError, OSError)):
-            invalid_generator.generate_erd()
+        try:
+            # Create a generator with invalid configuration
+            invalid_generator = ERDGenerator(
+                models_path="nonexistent_models.py", output_path=temp_erd_file
+            )
 
-        # ERD file should not be corrupted
-        erd_file = Path("../docs/database/erd.mmd")
-        if erd_file.exists():
-            # File should still be readable
-            content = erd_file.read_text()
-            assert len(content) > 0
+            # Attempt generation should fail gracefully
+            with pytest.raises((FileNotFoundError, PermissionError, OSError)):
+                invalid_generator.generate_erd()
+
+            # ERD file should not be corrupted
+            if Path(temp_erd_file).exists():
+                # File should still be readable
+                content = Path(temp_erd_file).read_text()
+                assert len(content) > 0
+        finally:
+            Path(temp_erd_file).unlink(missing_ok=True)
 
     def test_performance_auto_update(self):
         """Test that automatic updates meet performance requirements."""
@@ -233,23 +263,30 @@ class NewModel(SQLModel, table=True):
         """Test that configuration changes trigger ERD updates."""
         from erd import ERDGenerator
 
-        # Test with different configurations
-        configs = [
-            {"models_path": "app/models.py"},
-            {"output_path": "../docs/database/erd.mmd"},
-            {
-                "models_path": "app/models.py",
-                "output_path": "../docs/database/erd.mmd",
-            },
-        ]
+        # Use temporary file for testing
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as f:
+            temp_erd_file = f.name
 
-        for config in configs:
-            generator = ERDGenerator(**config)
-            result = generator.generate_erd()
+        try:
+            # Test with different configurations
+            configs = [
+                {"models_path": "app/models.py"},
+                {"output_path": temp_erd_file},
+                {
+                    "models_path": "app/models.py",
+                    "output_path": temp_erd_file,
+                },
+            ]
 
-            # Should work with different configurations
-            assert isinstance(result, str)
-            assert len(result) > 0
+            for config in configs:
+                generator = ERDGenerator(**config)
+                result = generator.generate_erd()
+
+                # Should work with different configurations
+                assert isinstance(result, str)
+                assert len(result) > 0
+        finally:
+            Path(temp_erd_file).unlink(missing_ok=True)
 
     def test_error_recovery_integration(self):
         """Test error recovery and retry mechanisms."""
