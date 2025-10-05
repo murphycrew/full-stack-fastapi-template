@@ -4,6 +4,8 @@ Auto-generated from all feature plans. Last updated: 2025-10-03
 
 ## Active Technologies
 - Python 3.11+ + SQLModel, Mermaid, Git hooks, pre-commit framework (001-as-a-first)
+- Python 3.11+, SQLModel, FastAPI + PostgreSQL, Alembic, SQLModel, FastAPI, psycopg (002-tenant-isolation-via)
+- PostgreSQL with RLS policies (002-tenant-isolation-via)
 
 ## Project Structure
 ```
@@ -19,6 +21,8 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.11+: Follow standard conventions
 
 ## Recent Changes
+- 002-tenant-isolation-via: Added Python 3.11+, SQLModel, FastAPI + PostgreSQL, Alembic, SQLModel, FastAPI, psycopg
+- 002-tenant-isolation-via: Added Python 3.11+, SQLModel, FastAPI + PostgreSQL, Alembic, SQLModel, FastAPI, psycopg
 - 001-as-a-first: Added Python 3.11+ + SQLModel, Mermaid, Git hooks, pre-commit framework
 
 <!-- MANUAL ADDITIONS START -->
