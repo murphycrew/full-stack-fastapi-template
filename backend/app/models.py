@@ -3,6 +3,8 @@ import uuid
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
+from app.core.rls import UserScopedBase
+
 
 # Shared properties
 class UserBase(SQLModel):
@@ -73,18 +75,16 @@ class ItemUpdate(ItemBase):
 
 
 # Database model, database table inferred from class name
-class Item(ItemBase, table=True):
+class Item(ItemBase, UserScopedBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
-    )
+    # owner_id is automatically inherited from UserScopedBase
     owner: User | None = Relationship(back_populates="items")
 
 
 # Properties to return via API, id is always required
 class ItemPublic(ItemBase):
     id: uuid.UUID
-    owner_id: uuid.UUID
+    owner_id: uuid.UUID  # Inherited from UserScopedBase
 
 
 class ItemsPublic(SQLModel):

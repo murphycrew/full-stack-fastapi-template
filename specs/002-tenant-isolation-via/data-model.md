@@ -60,7 +60,8 @@
   - `is_superuser: bool` - Full admin privileges
   - `is_read_only_admin: bool` - Read-only admin privileges
 - `Database-Level Admin`: Database role for maintenance operations
-  - `role_name: str` - Database role name
+  - `application_user: str` - Database role for normal application operations (subject to RLS)
+  - `maintenance_admin: str` - Database role for maintenance operations (bypasses RLS)
   - `permissions: list[str]` - Database permissions
 
 **Context Setting**:

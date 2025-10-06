@@ -34,7 +34,18 @@ repos:
         files: ^frontend/
       - id: erd-generation
         name: ERD generation
-        entry: bash -c 'cd backend && python scripts/generate_erd.py --validate --verbose --force'
+        entry: bash -c 'cd backend && source .venv/bin/activate && DETERMINISTIC_ERD_GENERATION=1 python scripts/generate_erd.py --validate --verbose --force'
+        language: system
+        types: [python]
+        files: ^backend/app/models\.py$
+        stages: [pre-commit]
+        always_run: false
+        pass_filenames: false
+        require_serial: true
+        description: "Generate and validate ERD diagrams from SQLModel definitions (Mermaid format)"
+      - id: rls-validation
+        name: RLS model validation
+        entry: bash -c 'cd backend && source .venv/bin/activate && python scripts/lint_rls.py --verbose'
         language: system
         types: [python]
         files: ^backend/app/.*\.py$
@@ -42,7 +53,7 @@ repos:
         always_run: false
         pass_filenames: true
         require_serial: false
-        description: "Generate and validate ERD diagrams from SQLModel definitions (Mermaid format)"
+        description: "Validate that user-owned models inherit from UserScopedBase for RLS enforcement"
 
 ci:
   autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks

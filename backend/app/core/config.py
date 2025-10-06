@@ -94,6 +94,20 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
 
+    # RLS (Row-Level Security) Configuration
+    RLS_ENABLED: bool = True
+    RLS_FORCE: bool = False  # Force RLS even for privileged roles
+
+    # Initial user configuration for RLS demonstration
+    FIRST_USER: EmailStr = "user@example.com"
+    FIRST_USER_PASSWORD: str = "changethis"
+
+    # Database role configuration for RLS
+    RLS_APP_USER: str = "rls_app_user"
+    RLS_APP_PASSWORD: str = "changethis"
+    RLS_MAINTENANCE_ADMIN: str = "rls_maintenance_admin"
+    RLS_MAINTENANCE_ADMIN_PASSWORD: str = "changethis"
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (
@@ -112,8 +126,47 @@ class Settings(BaseSettings):
         self._check_default_secret(
             "FIRST_SUPERUSER_PASSWORD", self.FIRST_SUPERUSER_PASSWORD
         )
+        self._check_default_secret("FIRST_USER_PASSWORD", self.FIRST_USER_PASSWORD)
+        self._check_default_secret("RLS_APP_PASSWORD", self.RLS_APP_PASSWORD)
+        self._check_default_secret(
+            "RLS_MAINTENANCE_ADMIN_PASSWORD", self.RLS_MAINTENANCE_ADMIN_PASSWORD
+        )
 
         return self
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def rls_enabled(self) -> bool:
+        """Check if RLS is enabled and properly configured."""
+        return self.RLS_ENABLED and bool(
+            self.RLS_APP_USER and self.RLS_MAINTENANCE_ADMIN
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def rls_app_database_uri(self) -> PostgresDsn:
+        """Get database URI for RLS application user."""
+        return PostgresDsn.build(
+            scheme="postgresql+psycopg",
+            username=self.RLS_APP_USER,
+            password=self.RLS_APP_PASSWORD,
+            host=self.POSTGRES_SERVER,
+            port=self.POSTGRES_PORT,
+            path=self.POSTGRES_DB,
+        )
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def rls_maintenance_database_uri(self) -> PostgresDsn:
+        """Get database URI for RLS maintenance admin user."""
+        return PostgresDsn.build(
+            scheme="postgresql+psycopg",
+            username=self.RLS_MAINTENANCE_ADMIN,
+            password=self.RLS_MAINTENANCE_ADMIN_PASSWORD,
+            host=self.POSTGRES_SERVER,
+            port=self.POSTGRES_PORT,
+            path=self.POSTGRES_DB,
+        )
 
 
 settings = Settings()  # type: ignore

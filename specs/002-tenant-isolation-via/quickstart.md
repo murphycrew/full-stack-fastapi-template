@@ -12,7 +12,26 @@ This quickstart demonstrates how to use the automatic Row-Level Security (RLS) s
 - FastAPI template with RLS feature enabled
 - Docker Compose environment running
 
-## Step 1: Enable RLS
+## Step 1: Initial Setup
+
+The template creates both a regular user and an admin user for RLS demonstration:
+
+### Regular User
+- **Email**: `user@example.com` (configurable via `FIRST_USER`)
+- **Password**: `changethis` (configurable via `FIRST_USER_PASSWORD`)
+- **Role**: Regular user (subject to RLS policies)
+
+### Admin User
+- **Email**: `admin@example.com` (configurable via `FIRST_SUPERUSER`)
+- **Password**: `changethis` (configurable via `FIRST_SUPERUSER_PASSWORD`)
+- **Role**: Superuser (can bypass RLS policies)
+
+### Database Roles
+The template sets up two database roles:
+- **Application User**: `POSTGRES_USER` - Normal application operations (subject to RLS)
+- **Maintenance Admin**: `MAINTENANCE_ADMIN_USER` - Maintenance operations (bypasses RLS)
+
+## Step 2: Enable RLS
 
 RLS is enabled by default in the template. Verify configuration:
 

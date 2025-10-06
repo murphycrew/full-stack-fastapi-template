@@ -106,6 +106,9 @@ As a developer building a multi-user application, I want automatic database-leve
 - **FR-013**: System MUST update existing template models (like Item) to demonstrate RLS functionality as working examples
 - **FR-014**: System MUST provide clear documentation and examples showing how to declare models as user-scoped in the template
 - **FR-015**: System MUST ensure template users can immediately see RLS in action with the provided example models
+- **FR-016**: System MUST create both a regular user and an admin user during initial setup for RLS demonstration
+- **FR-017**: System MUST provide configuration for initial user credentials (regular user email/password, admin user email/password)
+- **FR-018**: System MUST create database roles for application operations and maintenance operations during setup
 
 ### Key Entities
 - **UserScopedBase**: A base class that models inherit from to automatically enable RLS enforcement with owner_id field

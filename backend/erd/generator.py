@@ -52,12 +52,22 @@ class ERDGenerator:
             mermaid_code = self._generate_mermaid_code(entities, relationships)
 
             # Step 6: Create ERD output
+            # Use deterministic timestamp for pre-commit environments
+            import os
+
+            if os.getenv("DETERMINISTIC_ERD_GENERATION"):
+                generation_time = (
+                    "2024-01-01T00:00:00.000000"  # Fixed timestamp for pre-commit
+                )
+            else:
+                generation_time = datetime.now().isoformat()
+
             erd_output = ERDOutput(
                 mermaid_code=mermaid_code,
                 entities=[entity.to_dict() for entity in entities],
                 relationships=[rel.to_dict() for rel in relationships],
                 metadata={
-                    "generated_at": datetime.now().isoformat(),
+                    "generated_at": generation_time,
                     "models_processed": len(self.generated_models),
                     "entities_count": len(entities),
                     "relationships_count": len(relationships),

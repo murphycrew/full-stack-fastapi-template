@@ -41,55 +41,63 @@
 - **Migrations**: `backend/app/alembic/versions/`
 
 ## Phase 3.1: Setup
-- [ ] T001 Create RLS infrastructure directory structure
-- [ ] T002 Add RLS dependencies to pyproject.toml
-- [ ] T003 [P] Configure RLS environment variables in core/config.py
-- [ ] T004 [P] Add RLS linting rules to pre-commit hooks
+- [x] T001 Create RLS infrastructure directory structure
+- [x] T002 Add RLS dependencies to pyproject.toml
+- [x] T003 [P] Configure RLS environment variables in core/config.py
+- [x] T004 [P] Add RLS linting rules to pre-commit hooks
+- [x] T035 [P] Add initial user configuration variables to copier.yml
+- [x] T036 [P] Add database role configuration variables to copier.yml
 
-## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
+## Phase 3.2: Tests First (TDD) ✅ COMPLETED
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
-- [ ] T005 [P] Integration test user-scoped model isolation in tests/integration/test_rls_isolation.py
-- [ ] T006 [P] Integration test admin bypass functionality in tests/integration/test_rls_admin.py
-- [ ] T007 [P] Integration test RLS policy enforcement in tests/integration/test_rls_policies.py
-- [ ] T008 [P] Integration test session context management in tests/integration/test_rls_context.py
-- [ ] T009 [P] Unit test UserScopedBase model behavior in tests/unit/test_rls_models.py
-- [ ] T010 [P] Unit test RLS registry functionality in tests/unit/test_rls_registry.py
+- [x] T005 [P] Integration test user-scoped model isolation in tests/integration/test_rls_isolation.py
+- [x] T006 [P] Integration test admin bypass functionality in tests/integration/test_rls_admin.py
+- [x] T007 [P] Integration test RLS policy enforcement in tests/integration/test_rls_policies.py
+- [x] T008 [P] Integration test session context management in tests/integration/test_rls_context.py
+- [x] T009 [P] Unit test UserScopedBase model behavior in tests/unit/test_rls_models.py
+- [x] T010 [P] Unit test RLS registry functionality in tests/unit/test_rls_registry.py
 
-## Phase 3.3: Core Implementation (ONLY after tests are failing)
-- [ ] T011 [P] UserScopedBase model in backend/app/core/rls.py
-- [ ] T012 [P] RLS registry system in backend/app/core/rls.py
-- [ ] T013 [P] Identity context management in backend/app/api/deps.py
-- [ ] T014 [P] RLS policy generation utilities in backend/app/core/rls.py
-- [ ] T015 [P] Admin context management in backend/app/core/rls.py
-- [ ] T016 [P] RLS configuration management in backend/app/core/config.py
+## Phase 3.3: Core Implementation ✅ COMPLETED
+- [x] T011 [P] UserScopedBase model in backend/app/core/rls.py
+- [x] T012 [P] RLS registry system in backend/app/core/rls.py
+- [x] T013 [P] Identity context management in backend/app/api/deps.py
+- [x] T014 [P] RLS policy generation utilities in backend/app/core/rls.py
+- [x] T015 [P] Admin context management in backend/app/core/rls.py
+- [x] T016 [P] RLS configuration management in backend/app/core/config.py
 
-## Phase 3.4: Model Updates
-- [ ] T017 [P] Update Item model to inherit from UserScopedBase in backend/app/models.py
-- [ ] T018 [P] Add RLS validation to existing models in backend/app/models.py
-- [ ] T019 [P] Update CRUD operations for RLS compatibility in backend/app/crud.py
+## Phase 3.4: Model Updates ✅ COMPLETED
+- [x] T017 [P] Update Item model to inherit from UserScopedBase in backend/app/models.py
+- [x] T018 [P] Add RLS validation to existing models in backend/app/models.py
+- [x] T019 [P] Update CRUD operations for RLS compatibility in backend/app/crud.py
+- [x] T037 [P] Create initial regular user in backend/app/initial_data.py
+- [x] T038 [P] Create initial admin user in backend/app/initial_data.py
 
-## Phase 3.5: Migration Integration
-- [ ] T020 [P] Add RLS policy generation to Alembic env.py in backend/app/alembic/env.py
-- [ ] T021 [P] Create RLS policy migration utilities in backend/app/alembic/rls_policies.py
-- [ ] T022 [P] Generate initial RLS migration for existing models in backend/app/alembic/versions/
+## Phase 3.5: Migration Integration ✅ COMPLETED
+- [x] T020 [P] Add RLS policy generation to Alembic env.py in backend/app/alembic/env.py
+- [x] T021 [P] Create RLS policy migration utilities in backend/app/alembic/rls_policies.py
+- [x] T022 [P] Generate initial RLS migration for existing models in backend/app/alembic/versions/
+- [x] T039 [P] Create application database user role in backend/scripts/setup_db_roles.py
+- [x] T040 [P] Create maintenance admin database user role in backend/scripts/setup_db_roles.py
 
-## Phase 3.6: API Integration
-- [ ] T023 [P] Update FastAPI dependencies for RLS context in backend/app/api/deps.py
-- [ ] T024 [P] Update Item API endpoints for RLS compatibility in backend/app/api/routes/items.py
-- [ ] T025 [P] Add RLS error handling to API responses in backend/app/api/main.py
+## Phase 3.6: API Integration ✅ COMPLETED
+- [x] T023 [P] Update FastAPI dependencies for RLS context in backend/app/api/deps.py
+- [x] T024 [P] Update Item API endpoints for RLS compatibility in backend/app/api/routes/items.py
+- [x] T025 [P] Add RLS error handling to API responses in backend/app/api/main.py
 
-## Phase 3.7: CI and Validation
-- [ ] T026 [P] Add CI lint check for undeclared user-owned models in backend/scripts/lint_rls.py
-- [ ] T027 [P] Update pre-commit hooks for RLS validation in .pre-commit-config.yaml
-- [ ] T028 [P] Add RLS validation to backend startup in backend/app/backend_pre_start.py
+## Phase 3.7: CI and Validation ✅ COMPLETED
+- [x] T026 [P] Add CI lint check for undeclared user-owned models in backend/scripts/lint_rls.py
+- [x] T027 [P] Update pre-commit hooks for RLS validation in .pre-commit-config.yaml
+- [x] T028 [P] Add RLS validation to backend startup in backend/app/backend_pre_start.py
+- [x] T041 [P] Update docker-compose.yml for multiple database users
+- [x] T042 [P] Update backend startup scripts for database role setup
 
-## Phase 3.8: Polish
-- [ ] T029 [P] Performance tests for RLS policies in tests/performance/test_rls_performance.py
-- [ ] T030 [P] Create RLS documentation in docs/security/rls-user.md
-- [ ] T031 [P] Update ERD documentation with RLS models in docs/database/erd.md
-- [ ] T032 [P] Add RLS troubleshooting guide in docs/security/rls-troubleshooting.md
-- [ ] T033 [P] Update README with RLS information in backend/README.md
-- [ ] T034 [P] Create RLS quickstart examples in docs/examples/rls-examples.md
+## Phase 3.8: Polish ✅ COMPLETED
+- [x] T029 [P] Performance tests for RLS policies in tests/performance/test_rls_performance.py
+- [x] T030 [P] Create RLS documentation in docs/security/rls-user.md
+- [x] T031 [P] Update ERD documentation with RLS models in docs/database/erd.md
+- [x] T032 [P] Add RLS troubleshooting guide in docs/security/rls-troubleshooting.md
+- [x] T033 [P] Update README with RLS information in backend/README.md
+- [x] T034 [P] Create RLS quickstart examples in docs/examples/rls-examples.md
 
 ## Dependencies
 - Tests (T005-T010) before implementation (T011-T016)
@@ -99,6 +107,9 @@
 - T016 blocks T023
 - T017 blocks T024
 - T020 blocks T022
+- T035 blocks T037, T038 (configuration before user creation)
+- T036 blocks T039, T040 (configuration before role creation)
+- T039, T040 blocks T041, T042 (roles before docker/startup updates)
 - Implementation before polish (T029-T034)
 
 ## Parallel Example
@@ -110,6 +121,10 @@ Task: "Integration test RLS policy enforcement in tests/integration/test_rls_pol
 Task: "Integration test session context management in tests/integration/test_rls_context.py"
 Task: "Unit test UserScopedBase model behavior in tests/unit/test_rls_models.py"
 Task: "Unit test RLS registry functionality in tests/unit/test_rls_registry.py"
+
+# Launch T035-T036 together (configuration setup):
+Task: "Add initial user configuration variables to copier.yml"
+Task: "Add database role configuration variables to copier.yml"
 ```
 
 ## Notes
