@@ -162,7 +162,7 @@ class RLSPolicyGenerator:
             f"""
             CREATE POLICY user_select_policy ON {table_name}
                 FOR SELECT USING (
-                    app.user_id::uuid = owner_id OR
+                    current_setting('app.user_id', true)::uuid = owner_id OR
                     current_setting('app.role', true) IN ('admin', 'read_only_admin')
                 );
         """
@@ -173,7 +173,7 @@ class RLSPolicyGenerator:
             f"""
             CREATE POLICY user_insert_policy ON {table_name}
                 FOR INSERT WITH CHECK (
-                    app.user_id::uuid = owner_id OR
+                    current_setting('app.user_id', true)::uuid = owner_id OR
                     current_setting('app.role', true) = 'admin'
                 );
         """
@@ -184,7 +184,7 @@ class RLSPolicyGenerator:
             f"""
             CREATE POLICY user_update_policy ON {table_name}
                 FOR UPDATE USING (
-                    app.user_id::uuid = owner_id OR
+                    current_setting('app.user_id', true)::uuid = owner_id OR
                     current_setting('app.role', true) = 'admin'
                 );
         """
@@ -195,7 +195,7 @@ class RLSPolicyGenerator:
             f"""
             CREATE POLICY user_delete_policy ON {table_name}
                 FOR DELETE USING (
-                    app.user_id::uuid = owner_id OR
+                    current_setting('app.user_id', true)::uuid = owner_id OR
                     current_setting('app.role', true) = 'admin'
                 );
         """
