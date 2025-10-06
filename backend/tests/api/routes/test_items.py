@@ -60,9 +60,10 @@ def test_read_item_not_enough_permissions(
         f"{settings.API_V1_STR}/items/{item.id}",
         headers=normal_user_token_headers,
     )
-    assert response.status_code == 400
+    # With RLS enabled, users can only see their own items, so this returns 404
+    assert response.status_code == 404
     content = response.json()
-    assert content["detail"] == "Not enough permissions"
+    assert content["detail"] == "Item not found"
 
 
 def test_read_items(
@@ -121,9 +122,10 @@ def test_update_item_not_enough_permissions(
         headers=normal_user_token_headers,
         json=data,
     )
-    assert response.status_code == 400
+    # With RLS enabled, users can only see their own items, so this returns 404
+    assert response.status_code == 404
     content = response.json()
-    assert content["detail"] == "Not enough permissions"
+    assert content["detail"] == "Item not found"
 
 
 def test_delete_item(
@@ -159,6 +161,7 @@ def test_delete_item_not_enough_permissions(
         f"{settings.API_V1_STR}/items/{item.id}",
         headers=normal_user_token_headers,
     )
-    assert response.status_code == 400
+    # With RLS enabled, users can only see their own items, so this returns 404
+    assert response.status_code == 404
     content = response.json()
-    assert content["detail"] == "Not enough permissions"
+    assert content["detail"] == "Item not found"

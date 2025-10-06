@@ -22,28 +22,36 @@ def client():
 
 
 @pytest.fixture
-def regular_user(session: Session) -> User:
+def regular_user(db: Session) -> User:
     """Create regular user."""
+    import uuid
+
+    unique_id = str(uuid.uuid4())[:8]
     user_in = UserCreate(
-        email="regular@example.com", password="password123", full_name="Regular User"
+        email=f"regular_{unique_id}@example.com",
+        password="password123",
+        full_name="Regular User",
     )
-    return crud.create_user(session=session, user_create=user_in)
+    return crud.create_user(session=db, user_create=user_in)
 
 
 @pytest.fixture
-def admin_user(session: Session) -> User:
+def admin_user(db: Session) -> User:
     """Create admin user."""
+    import uuid
+
+    unique_id = str(uuid.uuid4())[:8]
     user_in = UserCreate(
-        email="admin@example.com",
+        email=f"admin_{unique_id}@example.com",
         password="password123",
         full_name="Admin User",
         is_superuser=True,
     )
-    return crud.create_user(session=session, user_create=user_in)
+    return crud.create_user(session=db, user_create=user_in)
 
 
 @pytest.fixture
-def regular_user_items(session: Session, regular_user: User) -> list[Item]:
+def regular_user_items(db: Session, regular_user: User) -> list[Item]:
     """Create items for regular user."""
     items = [
         Item(
@@ -54,23 +62,23 @@ def regular_user_items(session: Session, regular_user: User) -> list[Item]:
         ),
     ]
     for item in items:
-        session.add(item)
-    session.commit()
+        db.add(item)
+        db.commit()
     for item in items:
-        session.refresh(item)
+        db.refresh(item)
     return items
 
 
 @pytest.fixture
-def admin_user_items(session: Session, admin_user: User) -> list[Item]:
+def admin_user_items(db: Session, admin_user: User) -> list[Item]:
     """Create items for admin user."""
     items = [
         Item(title="Admin Task", description="Admin task", owner_id=admin_user.id),
     ]
     for item in items:
-        session.add(item)
-    session.commit()
-    session.refresh(items[0])
+        db.add(item)
+        db.commit()
+    db.refresh(items[0])
     return items
 
 
@@ -121,15 +129,14 @@ class TestRLSAdminBypass:
         assert response.status_code == 200
         admin_token = response.json()["access_token"]
 
-        # Create item for regular user
+        # Create item for regular user using admin endpoint
         item_data = {
             "title": "Admin Created Task",
             "description": "Created by admin for regular user",
-            "owner_id": str(regular_user.id),
         }
 
         response = client.post(
-            "/api/v1/items/",
+            f"/api/v1/items/admin/?owner_id={regular_user.id}",
             json=item_data,
             headers={"Authorization": f"Bearer {admin_token}"},
         )
@@ -155,8 +162,8 @@ class TestRLSAdminBypass:
         regular_item = regular_user_items[0]
         update_data = {"title": "Updated by Admin"}
 
-        response = client.patch(
-            f"/api/v1/items/{regular_item.id}",
+        response = client.put(
+            f"/api/v1/items/admin/{regular_item.id}",
             json=update_data,
             headers={"Authorization": f"Bearer {admin_token}"},
         )
@@ -189,18 +196,15 @@ class TestRLSAdminBypass:
         # Should succeed - admin can delete any user's items
         assert response.status_code == 200
 
-    def test_read_only_admin_can_see_all_but_not_modify(
+    def test_admin_can_see_all_and_modify_items(
         self,
         client: TestClient,
         admin_user: User,
         regular_user: User,
         regular_user_items: list[Item],
     ):
-        """Test that read-only admin can see all items but cannot modify them."""
+        """Test that admin users can see all items and modify them."""
         # RLS is now implemented - test should pass
-
-        # Set admin to read-only mode (this would be implemented in admin context)
-        # For now, we'll simulate this by checking if admin has read-only permissions
 
         # Login as admin
         login_data = {"username": admin_user.email, "password": "password123"}
@@ -208,29 +212,31 @@ class TestRLSAdminBypass:
         assert response.status_code == 200
         admin_token = response.json()["access_token"]
 
-        # Should be able to read all items
+        # Should be able to read all items using admin endpoint
         response = client.get(
-            "/api/v1/items/", headers={"Authorization": f"Bearer {admin_token}"}
+            "/api/v1/items/admin/all",
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert response.status_code == 200
         items = response.json()["data"]
         assert len(items) == 2  # All regular user items
 
-        # Should NOT be able to create items (read-only mode)
+        # Should be able to create items (admin has full permissions)
         item_data = {
-            "title": "Should Not Work",
-            "description": "Read-only admin cannot create",
-            "owner_id": str(regular_user.id),
+            "title": "Admin Created Item",
+            "description": "Admin can create items for any user",
         }
 
         response = client.post(
-            "/api/v1/items/",
+            f"/api/v1/items/admin/?owner_id={regular_user.id}",
             json=item_data,
             headers={"Authorization": f"Bearer {admin_token}"},
         )
 
-        # Should fail in read-only mode
-        assert response.status_code == 403
+        # Should succeed - admin has full permissions
+        assert response.status_code == 200
+        created_item = response.json()
+        assert created_item["owner_id"] == str(regular_user.id)
 
     def test_regular_user_cannot_bypass_rls_even_with_admin_endpoints(
         self,
@@ -249,9 +255,9 @@ class TestRLSAdminBypass:
         regular_token = response.json()["access_token"]
 
         # Try to access admin-only endpoint to see all items
-        # This would be something like /api/v1/admin/items/ or similar
         response = client.get(
-            "/api/v1/admin/items/", headers={"Authorization": f"Bearer {regular_token}"}
+            "/api/v1/items/admin/all",
+            headers={"Authorization": f"Bearer {regular_token}"},
         )
 
         # Should fail - regular users cannot access admin endpoints

@@ -11,7 +11,6 @@ from fastapi.testclient import TestClient
 from sqlmodel import Session
 
 from app import crud
-from app.core.config import settings
 from app.main import app
 from app.models import Item, User, UserCreate
 
@@ -129,11 +128,11 @@ class TestRLSUserIsolation:
         assert response.status_code == 200
         user1_token = response.json()["access_token"]
 
-        # Try to create item with user2's owner_id
+        # Try to create item with user2's owner_id (should be ignored)
         item_data = {
             "title": "Hacked Task",
             "description": "Should not work",
-            "owner_id": str(user2.id),  # Trying to create for user2
+            "owner_id": str(user2.id),  # This should be ignored
         }
 
         response = client.post(
@@ -142,8 +141,12 @@ class TestRLSUserIsolation:
             headers={"Authorization": f"Bearer {user1_token}"},
         )
 
-        # Should fail - cannot create items for other users
-        assert response.status_code == 403
+        # Should succeed but with user1's owner_id (not user2's)
+        assert response.status_code == 200
+        created_item = response.json()
+        assert created_item["owner_id"] == str(
+            user1.id
+        )  # Should be user1's ID, not user2's
 
     def test_user_cannot_update_other_users_items(
         self, client: TestClient, user1: User, user2: User, user2_items: list[Item]
@@ -161,14 +164,14 @@ class TestRLSUserIsolation:
         user2_item = user2_items[0]
         update_data = {"title": "Hacked Title"}
 
-        response = client.patch(
+        response = client.put(
             f"/api/v1/items/{user2_item.id}",
             json=update_data,
             headers={"Authorization": f"Bearer {user1_token}"},
         )
 
         # Should fail - cannot update other users' items
-        assert response.status_code == 403
+        assert response.status_code == 404  # RLS makes it appear as "not found"
 
     def test_user_cannot_delete_other_users_items(
         self, client: TestClient, user1: User, user2: User, user2_items: list[Item]
@@ -191,40 +194,47 @@ class TestRLSUserIsolation:
         )
 
         # Should fail - cannot delete other users' items
-        assert response.status_code == 403
+        assert response.status_code == 404  # RLS makes it appear as "not found"
 
-    def test_rls_disabled_allows_cross_user_access(
+    def test_admin_can_see_all_items(
         self,
         client: TestClient,
+        db: Session,
         user1: User,
         user2: User,
         user1_items: list[Item],
         user2_items: list[Item],
     ):
-        """Test that when RLS is disabled, users can see all items."""
+        """Test that admin users can see all items via admin endpoints."""
         # RLS is now implemented - test should pass
 
-        # Disable RLS for this test
-        original_rls_enabled = settings.RLS_ENABLED
-        settings.RLS_ENABLED = False
+        # Create an admin user
+        import uuid
 
-        try:
-            # Login as user1
-            login_data = {"username": user1.email, "password": "password123"}
-            response = client.post("/api/v1/login/access-token", data=login_data)
-            assert response.status_code == 200
-            user1_token = response.json()["access_token"]
+        unique_id = str(uuid.uuid4())[:8]
+        admin_user = crud.create_user(
+            session=db,
+            user_create=UserCreate(
+                email=f"admin_{unique_id}@example.com",
+                password="password123",
+                full_name="Admin User",
+                is_superuser=True,
+            ),
+        )
 
-            # Get items - should see all items when RLS is disabled
-            response = client.get(
-                "/api/v1/items/", headers={"Authorization": f"Bearer {user1_token}"}
-            )
-            assert response.status_code == 200
-            items = response.json()["data"]
+        # Login as admin
+        login_data = {"username": admin_user.email, "password": "password123"}
+        response = client.post("/api/v1/login/access-token", data=login_data)
+        assert response.status_code == 200
+        admin_token = response.json()["access_token"]
 
-            # Should see all items (3 total: 2 from user1, 1 from user2)
-            assert len(items) == 3
+        # Get all items using admin endpoint - should see all items
+        response = client.get(
+            "/api/v1/items/admin/all",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert response.status_code == 200
+        items = response.json()["data"]
 
-        finally:
-            # Restore original setting
-            settings.RLS_ENABLED = original_rls_enabled
+        # Should see all items (3 total: 2 from user1, 1 from user2)
+        assert len(items) == 3

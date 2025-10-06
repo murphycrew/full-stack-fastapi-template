@@ -115,6 +115,10 @@ class EntityDefinition:
         fields = []
 
         for field_meta in model_metadata.fields:
+            # Skip relationship fields - they should not appear as database columns
+            if cls._is_relationship_field(field_meta, model_metadata):
+                continue
+
             # Convert type hint to Mermaid type
             mermaid_type = cls._convert_type_to_mermaid(field_meta.type_hint)
 
@@ -143,6 +147,27 @@ class EntityDefinition:
                 "line_number": model_metadata.line_number,
             },
         )
+
+    @classmethod
+    def _is_relationship_field(cls, field_meta, model_metadata) -> bool:
+        """Check if a field is a relationship field (not a database column)."""
+        # Check if this field is defined as a Relationship() in the model
+        for rel_info in model_metadata.relationships:
+            if rel_info.field_name == field_meta.name:
+                return True
+
+        # Check field type for relationship indicators
+        field_type = field_meta.type_hint.lower()
+
+        # List types are usually relationships (e.g., list["Item"])
+        if "list[" in field_type or "List[" in field_type:
+            return True
+
+        # Union types with None might be relationships (e.g., User | None)
+        if "| None" in field_type and not field_meta.is_foreign_key:
+            return True
+
+        return False
 
     @staticmethod
     def _convert_type_to_mermaid(type_hint: str) -> str:

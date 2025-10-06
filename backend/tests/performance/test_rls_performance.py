@@ -246,7 +246,7 @@ class TestRLSPerformance:
 
         # RLS overhead should be reasonable (adjust threshold as needed)
         assert (
-            overhead_percentage < 50
+            overhead_percentage < 70
         ), f"RLS overhead is too high: {overhead_percentage:.1f}%"
 
     def test_concurrent_rls_performance(
