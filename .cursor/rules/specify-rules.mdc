@@ -26,17 +26,4 @@ Python 3.11+: Follow standard conventions
 - 001-as-a-first: Added Python 3.11+ + SQLModel, Mermaid, Git hooks, pre-commit framework
 
 <!-- MANUAL ADDITIONS START -->
-
-## Python Environment Management
-
-**CRITICAL: Always use `uv` for Python commands in the backend directory**
-
-- ✅ **DO**: `cd backend && uv run pytest tests/...`
-- ✅ **DO**: `cd backend && uv run python script.py`
-- ✅ **DO**: `cd backend && uv run mypy .`
-- ❌ **DON'T**: Use system Python directly (`python`, `pytest`, etc.)
-- ❌ **DON'T**: Use `python -m pytest` without `uv run`
-
-This ensures consistent dependency management and virtual environment usage across all Python operations.
-
 <!-- MANUAL ADDITIONS END -->
