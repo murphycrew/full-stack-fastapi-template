@@ -67,7 +67,7 @@ def get_items(
 ) -> list[Item]:
     """Get items for a specific owner (RLS enforced)."""
     statement = select(Item).where(Item.owner_id == owner_id).offset(skip).limit(limit)
-    return session.exec(statement).all()
+    return list(session.exec(statement).all())
 
 
 def update_item(
@@ -107,7 +107,7 @@ def get_all_items_admin(
 ) -> list[Item]:
     """Get all items (admin operation that bypasses RLS)."""
     statement = select(Item).offset(skip).limit(limit)
-    return session.exec(statement).all()
+    return list(session.exec(statement).all())
 
 
 def get_item_admin(*, session: Session, item_id: uuid.UUID) -> Item | None:

@@ -51,13 +51,13 @@ class UserScopedBase(SQLModel):
         description="ID of the user who owns this record",
     )
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls: type, **kwargs: Any) -> None:
         """Automatically register RLS-scoped models when they are defined."""
-        super().__init_subclass__(**kwargs)
-
         # Only register if this is a table model
         if hasattr(cls, "__tablename__"):
             table_name = cls.__tablename__
+            if callable(table_name):
+                table_name = table_name()
 
             # Register with RLS registry
             rls_registry.register_table(
@@ -263,7 +263,7 @@ class AdminContext:
         self._original_role: str | None = None
         self._original_user_id: UUID | None = None
 
-    def __enter__(self):
+    def __enter__(self) -> AdminContext:
         """Set admin context for the current session."""
         if self.session:
             # Store original context
@@ -289,7 +289,7 @@ class AdminContext:
         logger.debug(f"Setting admin context: user_id={self.user_id}, role={self.role}")
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Clear admin context."""
         if self.session:
             try:

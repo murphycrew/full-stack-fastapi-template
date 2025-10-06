@@ -87,7 +87,11 @@ def update_item(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Item not found"
             )
-        item = crud.update_item_admin(session=session, db_item=item, item_in=item_in)
+        item = crud.update_item_admin(
+            session=session,
+            db_item=item,
+            item_in=item_in.model_dump(exclude_unset=True),
+        )
     else:
         # Regular users can only update their own items
         item = crud.get_item(session=session, item_id=id, owner_id=current_user.id)
@@ -97,7 +101,10 @@ def update_item(
             )
         try:
             item = crud.update_item(
-                session=session, db_item=item, item_in=item_in, owner_id=current_user.id
+                session=session,
+                db_item=item,
+                item_in=item_in.model_dump(exclude_unset=True),
+                owner_id=current_user.id,
             )
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
@@ -176,7 +183,9 @@ def update_item_admin(
             status_code=status.HTTP_404_NOT_FOUND, detail="Item not found"
         )
 
-    item = crud.update_item_admin(session=session, db_item=item, item_in=item_in)
+    item = crud.update_item_admin(
+        session=session, db_item=item, item_in=item_in.model_dump(exclude_unset=True)
+    )
     return item
 
 
