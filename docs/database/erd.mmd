@@ -1,5 +1,5 @@
 %% Database ERD Diagram
-%% Generated: 2025-10-06T19:59:25.232992
+%% Generated: 2025-10-06T20:50:07.489083
 %% Version: Unknown
 %% Entities: 2
 %% Relationships: 1
@@ -9,20 +9,14 @@
 
 erDiagram
 
-USER {
-    string email NOT NULL
-    boolean is_active NOT NULL
-    boolean is_superuser NOT NULL
-    string full_name
-    string id PK NOT NULL
-    string hashed_password NOT NULL
+TESTUSER {
+    uuid id PK
+    string name
 }
 
-ITEM {
-    string owner_id FK NOT NULL
-    string title NOT NULL
-    string description
-    string id PK NOT NULL
+TESTITEM {
+    uuid id PK
+    string title
 }
 
-USER ||--o{ ITEM : items
+TESTUSER ||--o{ TESTITEM : items
