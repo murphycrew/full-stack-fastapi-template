@@ -3,12 +3,13 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, ItemsReadAllItemsAdminData, ItemsReadAllItemsAdminResponse, ItemsCreateItemAdminData, ItemsCreateItemAdminResponse, ItemsUpdateItemAdminData, ItemsUpdateItemAdminResponse, ItemsDeleteItemAdminData, ItemsDeleteItemAdminResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ItemsService {
     /**
      * Read Items
-     * Retrieve items.
+     * Retrieve items with RLS enforcement.
+     * Regular users see only their items, admins see all items.
      * @param data The data for the request.
      * @param data.skip
      * @param data.limit
@@ -31,7 +32,7 @@ export class ItemsService {
     
     /**
      * Create Item
-     * Create new item.
+     * Create new item with RLS enforcement.
      * @param data The data for the request.
      * @param data.requestBody
      * @returns ItemPublic Successful Response
@@ -51,7 +52,7 @@ export class ItemsService {
     
     /**
      * Read Item
-     * Get item by ID.
+     * Get item by ID with RLS enforcement.
      * @param data The data for the request.
      * @param data.id
      * @returns ItemPublic Successful Response
@@ -72,7 +73,7 @@ export class ItemsService {
     
     /**
      * Update Item
-     * Update an item.
+     * Update an item with RLS enforcement.
      * @param data The data for the request.
      * @param data.id
      * @param data.requestBody
@@ -96,7 +97,7 @@ export class ItemsService {
     
     /**
      * Delete Item
-     * Delete an item.
+     * Delete an item with RLS enforcement.
      * @param data The data for the request.
      * @param data.id
      * @returns Message Successful Response
@@ -106,6 +107,99 @@ export class ItemsService {
         return __request(OpenAPI, {
             method: 'DELETE',
             url: '/api/v1/items/{id}',
+            path: {
+                id: data.id
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read All Items Admin
+     * Retrieve all items (admin only).
+     * This endpoint bypasses RLS and shows all items regardless of ownership.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns ItemsPublic Successful Response
+     * @throws ApiError
+     */
+    public static readAllItemsAdmin(data: ItemsReadAllItemsAdminData = {}): CancelablePromise<ItemsReadAllItemsAdminResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/items/admin/all',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Item Admin
+     * Create item for any user (admin only).
+     * @param data The data for the request.
+     * @param data.ownerId
+     * @param data.requestBody
+     * @returns ItemPublic Successful Response
+     * @throws ApiError
+     */
+    public static createItemAdmin(data: ItemsCreateItemAdminData): CancelablePromise<ItemsCreateItemAdminResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/items/admin/',
+            query: {
+                owner_id: data.ownerId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Item Admin
+     * Update any item (admin only).
+     * @param data The data for the request.
+     * @param data.id
+     * @param data.requestBody
+     * @returns ItemPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateItemAdmin(data: ItemsUpdateItemAdminData): CancelablePromise<ItemsUpdateItemAdminResponse> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/v1/items/admin/{id}',
+            path: {
+                id: data.id
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Item Admin
+     * Delete any item (admin only).
+     * @param data The data for the request.
+     * @param data.id
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteItemAdmin(data: ItemsDeleteItemAdminData): CancelablePromise<ItemsDeleteItemAdminResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/items/admin/{id}',
             path: {
                 id: data.id
             },
