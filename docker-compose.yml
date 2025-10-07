@@ -64,6 +64,14 @@ services:
       - SECRET_KEY=${SECRET_KEY?Variable not set}
       - FIRST_SUPERUSER=${FIRST_SUPERUSER?Variable not set}
       - FIRST_SUPERUSER_PASSWORD=${FIRST_SUPERUSER_PASSWORD?Variable not set}
+      - FIRST_USER=${FIRST_USER?Variable not set}
+      - FIRST_USER_PASSWORD=${FIRST_USER_PASSWORD?Variable not set}
+      - RLS_ENABLED=${RLS_ENABLED?Variable not set}
+      - RLS_FORCE=${RLS_FORCE?Variable not set}
+      - RLS_APP_USER=${RLS_APP_USER?Variable not set}
+      - RLS_APP_PASSWORD=${RLS_APP_PASSWORD?Variable not set}
+      - RLS_MAINTENANCE_ADMIN=${RLS_MAINTENANCE_ADMIN?Variable not set}
+      - RLS_MAINTENANCE_ADMIN_PASSWORD=${RLS_MAINTENANCE_ADMIN_PASSWORD?Variable not set}
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASSWORD=${SMTP_PASSWORD}

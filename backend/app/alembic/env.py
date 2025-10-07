@@ -20,6 +20,7 @@ fileConfig(config.config_file_name)
 
 from app.models import SQLModel  # noqa
 from app.core.config import settings # noqa
+from app.core.rls import rls_registry, policy_generator # noqa
 
 target_metadata = SQLModel.metadata
 
@@ -60,6 +61,8 @@ def run_migrations_online():
     In this scenario we need to create an Engine
     and associate a connection with the context.
 
+    RLS policies are automatically applied after migrations if RLS is enabled.
+
     """
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = get_url()
@@ -76,6 +79,32 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
+            # Apply RLS policies after migrations if RLS is enabled
+            if settings.RLS_ENABLED:
+                apply_rls_policies(connection)
+
+
+def apply_rls_policies(connection):
+    """Apply RLS policies to all registered RLS-scoped tables."""
+    from sqlalchemy import text
+
+    # Get all registered RLS tables
+    registered_tables = rls_registry.get_registered_tables()
+
+    for table_name, metadata in registered_tables.items():
+        try:
+            # Generate and execute RLS setup SQL
+            rls_sql_statements = policy_generator.generate_complete_rls_setup_sql(table_name)
+
+            for sql_statement in rls_sql_statements:
+                connection.execute(text(sql_statement))
+
+            print(f"Applied RLS policies to table: {table_name}")
+
+        except Exception as e:
+            print(f"Warning: Failed to apply RLS policies to table {table_name}: {e}")
+            # Continue with other tables even if one fails
 
 
 if context.is_offline_mode():

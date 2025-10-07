@@ -156,7 +156,7 @@ class ERDOutput:
         # Add the actual Mermaid diagram
         lines.append(self.mermaid_code)
 
-        return "\n".join(lines)
+        return "\n".join(lines) + "\n"
 
     def to_dict(self) -> dict[str, Any]:
         """Convert ERD output to dictionary for serialization."""

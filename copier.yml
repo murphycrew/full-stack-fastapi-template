@@ -26,6 +26,16 @@ first_superuser_password:
   help: The password of the first superuser (in .env)
   default: changethis
 
+first_user:
+  type: str
+  help: The email of the first regular user for RLS demonstration (in .env)
+  default: user@example.com
+
+first_user_password:
+  type: str
+  help: The password of the first regular user (in .env)
+  default: changethis
+
 smtp_host:
   type: str
   help: The SMTP server host to send emails, you can set it later in .env
@@ -50,6 +60,32 @@ postgres_password:
   type: str
   help: |
     'The password for the PostgreSQL database, stored in .env,
+    you can generate one with:
+    python -c "import secrets; print(secrets.token_urlsafe(32))"'
+  default: changethis
+
+rls_app_user:
+  type: str
+  help: The database role name for normal application operations (subject to RLS)
+  default: rls_app_user
+
+rls_app_password:
+  type: str
+  help: |
+    'The password for the RLS application database role, stored in .env,
+    you can generate one with:
+    python -c "import secrets; print(secrets.token_urlsafe(32))"'
+  default: changethis
+
+rls_maintenance_admin:
+  type: str
+  help: The database role name for maintenance operations (bypasses RLS)
+  default: rls_maintenance_admin
+
+rls_maintenance_admin_password:
+  type: str
+  help: |
+    'The password for the RLS maintenance admin database role, stored in .env,
     you can generate one with:
     python -c "import secrets; print(secrets.token_urlsafe(32))"'
   default: changethis

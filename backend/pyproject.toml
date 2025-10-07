@@ -14,8 +14,9 @@ dependencies = [
     "jinja2<4.0.0,>=3.1.4",
     "alembic<2.0.0,>=1.12.1",
     "httpx<1.0.0,>=0.25.1",
-    "psycopg[binary]<4.0.0,>=3.1.13",
-    "sqlmodel>=0.0.21,<1.0.0",
+    # RLS (Row-Level Security) dependencies
+    "psycopg[binary]<4.0.0,>=3.1.13",  # PostgreSQL adapter with RLS support
+    "sqlmodel>=0.0.21,<1.0.0",         # ORM with SQLModel base class support
     # Pin bcrypt until passlib supports the latest
     "bcrypt==4.3.0",
     "pydantic-settings<3.0.0,>=2.2.1",
@@ -34,6 +35,9 @@ dev-dependencies = [
     "pytest-cov>=6.3.0",
     "black>=25.9.0",
     "psutil>=7.1.0",
+    # RLS testing and development dependencies
+    "pytest-asyncio>=0.23.0",  # For async RLS testing
+    "factory-boy>=3.3.0",      # For RLS test data generation
 ]
 
 [build-system]

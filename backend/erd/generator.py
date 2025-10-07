@@ -5,6 +5,7 @@ ERD Generator Module - Main entity responsible for generating Mermaid ERD diagra
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from .discovery import ModelDiscovery
 from .entities import EntityDefinition
@@ -52,12 +53,22 @@ class ERDGenerator:
             mermaid_code = self._generate_mermaid_code(entities, relationships)
 
             # Step 6: Create ERD output
+            # Use deterministic timestamp for pre-commit environments
+            import os
+
+            if os.getenv("DETERMINISTIC_ERD_GENERATION"):
+                generation_time = (
+                    "2024-01-01T00:00:00.000000"  # Fixed timestamp for pre-commit
+                )
+            else:
+                generation_time = datetime.now().isoformat()
+
             erd_output = ERDOutput(
                 mermaid_code=mermaid_code,
                 entities=[entity.to_dict() for entity in entities],
                 relationships=[rel.to_dict() for rel in relationships],
                 metadata={
-                    "generated_at": datetime.now().isoformat(),
+                    "generated_at": generation_time,
                     "models_processed": len(self.generated_models),
                     "entities_count": len(entities),
                     "relationships_count": len(relationships),
@@ -192,24 +203,209 @@ class ERDGenerator:
             for model_info in models:
                 self.generated_models[model_info["name"]] = model_info
 
+    def _import_models_runtime(self) -> dict[str, Any]:
+        """
+        Import models at runtime to get complete field information including inherited fields.
+
+        This method imports the actual model classes and inspects their SQLAlchemy metadata
+        to get the complete field information, including fields inherited from base classes
+        like UserScopedBase.
+
+        Returns:
+            Dictionary mapping model names to their actual class objects
+        """
+        try:
+            # Import the models module
+            import app.models as models_module
+
+            # Get all SQLModel classes from the module
+            model_classes = {}
+            for name in dir(models_module):
+                obj = getattr(models_module, name)
+                # Check if it's a SQLModel class with a table
+                if (
+                    isinstance(obj, type)
+                    and hasattr(obj, "__tablename__")
+                    and hasattr(obj, "__table__")
+                    and obj.__tablename__ is not None
+                ):
+                    model_classes[name] = obj
+
+            return model_classes
+
+        except ImportError as e:
+            raise Exception(f"Could not import models module: {e}")
+
+    def _extract_fields_from_runtime_model(
+        self, model_class: type
+    ) -> list[FieldMetadata]:
+        """
+        Extract field metadata from a runtime model class using SQLAlchemy introspection.
+
+        This method gets the complete field information including inherited fields
+        by inspecting the actual SQLAlchemy table metadata.
+
+        Args:
+            model_class: The actual model class (e.g., Item, User)
+
+        Returns:
+            List of FieldMetadata objects representing all database columns
+        """
+        fields = []
+
+        try:
+            # Get the SQLAlchemy table metadata
+            table = model_class.__table__
+
+            for column in table.columns:
+                # Skip relationship columns (they're handled separately)
+                if hasattr(column, "property") and hasattr(column.property, "mapper"):
+                    continue
+
+                # Determine field type
+                field_type = self._get_field_type_from_column(column)
+
+                # Determine if it's a primary key
+                is_primary_key = column.primary_key
+
+                # Determine if it's a foreign key
+                is_foreign_key = len(column.foreign_keys) > 0
+                foreign_key_target = None
+                if is_foreign_key:
+                    # Get the foreign key target table
+                    fk = list(column.foreign_keys)[0]
+                    foreign_key_target = fk.column.table.name
+
+                # Determine if it's nullable
+                is_nullable = column.nullable
+
+                # Create field metadata
+                field_meta = FieldMetadata(
+                    name=column.name,
+                    type_hint=field_type,
+                    is_primary_key=is_primary_key,
+                    is_foreign_key=is_foreign_key,
+                    is_nullable=is_nullable,
+                    foreign_key_reference=foreign_key_target,
+                )
+
+                fields.append(field_meta)
+
+        except Exception as e:
+            # If runtime inspection fails, log the error but continue
+            logging.warning(
+                f"Failed to extract fields from {model_class.__name__}: {e}"
+            )
+
+        return fields
+
+    def _extract_relationships_from_runtime_model(
+        self, model_class: type
+    ) -> list[RelationshipMetadata]:
+        """
+        Extract relationship metadata from a runtime model class.
+
+        Args:
+            model_class: The actual model class
+
+        Returns:
+            List of RelationshipMetadata objects representing all relationships
+        """
+        relationships = []
+
+        try:
+            # Get SQLAlchemy mapper
+            mapper = model_class.__mapper__
+
+            for prop in mapper.iterate_properties:
+                if hasattr(prop, "mapper") and hasattr(prop, "direction"):
+                    # This is a relationship property
+                    relationship_type = self._determine_relationship_type_from_property(
+                        prop
+                    )
+                    target_model = prop.mapper.class_.__name__
+
+                    rel_meta = RelationshipMetadata(
+                        field_name=prop.key,
+                        target_model=target_model,
+                        relationship_type=relationship_type,
+                        back_populates=getattr(prop, "back_populates", None),
+                        cascade=getattr(prop, "cascade", None),
+                    )
+
+                    relationships.append(rel_meta)
+
+        except Exception as e:
+            # If runtime inspection fails, log the error but continue
+            logging.warning(
+                f"Failed to extract relationships from {model_class.__name__}: {e}"
+            )
+
+        return relationships
+
+    def _get_field_type_from_column(self, column) -> str:
+        """Get a string representation of the field type from a SQLAlchemy column."""
+        # Map SQLAlchemy types to string representations
+        type_mapping = {
+            "UUID": "uuid",
+            "VARCHAR": "string",
+            "TEXT": "string",
+            "INTEGER": "int",
+            "BIGINT": "int",
+            "BOOLEAN": "bool",
+            "DATETIME": "datetime",
+            "DATE": "date",
+            "TIME": "time",
+            "FLOAT": "float",
+            "DECIMAL": "decimal",
+        }
+
+        # Get the type name
+        type_name = str(column.type)
+
+        # Extract the base type (e.g., 'VARCHAR(255)' -> 'VARCHAR')
+        base_type = type_name.split("(")[0].upper()
+
+        return type_mapping.get(base_type, "string")
+
+    def _determine_relationship_type_from_property(self, prop) -> str:
+        """Determine relationship type from SQLAlchemy relationship property."""
+        if prop.direction.name == "ONETOMANY":
+            return "one-to-many"
+        elif prop.direction.name == "MANYTOONE":
+            return "many-to-one"
+        elif prop.direction.name == "MANYTOMANY":
+            return "many-to-many"
+        else:
+            return "one-to-one"
+
     def _extract_model_metadata(self) -> None:
         """Extract detailed metadata from discovered models."""
+        # Import models at runtime to get complete field information
+        runtime_models = self._import_models_runtime()
+
         for model_name, model_info in self.generated_models.items():
             # Convert basic model info to ModelMetadata with enhanced introspection
             fields = []
             relationships = []
             constraints = []
 
-            # Enhanced field extraction with type hints and constraints
-            for field_name in model_info.get("fields", []):
-                field_meta = self._create_field_metadata(model_info, field_name)
+            # Get the actual model class for runtime inspection
+            model_class = runtime_models.get(model_name)
 
-                # Skip relationship fields - they're not database columns
-                if not self._is_relationship_field(field_meta, model_info):
-                    fields.append(field_meta)
-
-            # Extract relationships from the model
-            relationships = self._extract_relationships(model_info)
+            if model_class:
+                # Use runtime inspection to get complete field information
+                fields = self._extract_fields_from_runtime_model(model_class)
+                relationships = self._extract_relationships_from_runtime_model(
+                    model_class
+                )
+            else:
+                # Fallback to AST-based extraction for models not found at runtime
+                for field_name in model_info.get("fields", []):
+                    field_meta = self._create_field_metadata(model_info, field_name)
+                    if not self._is_relationship_field(field_meta, model_info):
+                        fields.append(field_meta)
+                relationships = self._extract_relationships(model_info)
 
             # Extract constraints (empty for now)
             constraints = []

@@ -1,5 +1,16 @@
 # FastAPI Project - Backend
 
+## Features
+
+This FastAPI backend template includes:
+
+- **Row-Level Security (RLS)**: Automatic data isolation using PostgreSQL RLS policies
+- **User Authentication**: JWT-based authentication with user management
+- **Admin Operations**: Admin bypass functionality for maintenance operations
+- **Automatic Migrations**: Alembic migrations with RLS policy generation
+- **API Documentation**: Auto-generated OpenAPI/Swagger documentation
+- **Testing Suite**: Comprehensive tests for RLS functionality and isolation
+
 ## Requirements
 
 * [Docker](https://www.docker.com/).
@@ -8,6 +19,49 @@
 ## Docker Compose
 
 Start the local development environment with Docker Compose following the guide in [../development.md](../development.md).
+
+## Row-Level Security (RLS)
+
+This project implements PostgreSQL Row-Level Security for automatic data isolation. Users can only access data they own, enforced at the database level.
+
+### Quick Start with RLS
+
+1. **Environment Setup**: Ensure RLS is enabled in your `.env` file:
+```bash
+RLS_ENABLED=true
+RLS_APP_USER=rls_app_user
+RLS_APP_PASSWORD=changethis
+RLS_MAINTENANCE_ADMIN=rls_maintenance_admin
+RLS_MAINTENANCE_ADMIN_PASSWORD=changethis
+```
+
+2. **Create RLS-Scoped Models**: Inherit from `UserScopedBase`:
+```python
+from app.core.rls import UserScopedBase
+
+class MyModel(UserScopedBase, table=True):
+    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    title: str
+    # owner_id is automatically inherited
+```
+
+3. **Use RLS-Aware API Endpoints**: Use the provided dependencies:
+```python
+from app.api.deps import RLSSessionDep, CurrentUser
+
+@router.get("/items/")
+def read_items(session: RLSSessionDep, current_user: CurrentUser):
+    # User can only see their own items
+    items = session.exec(select(Item)).all()
+    return items
+```
+
+### RLS Documentation
+
+- **[User Guide](../docs/security/rls-user.md)**: Comprehensive RLS usage guide
+- **[Troubleshooting](../docs/security/rls-troubleshooting.md)**: Common issues and solutions
+- **[Examples](../docs/examples/rls-examples.md)**: Code examples and use cases
+- **[Database ERD](../docs/database/erd.md)**: Schema with RLS annotations
 
 ## General Workflow
 

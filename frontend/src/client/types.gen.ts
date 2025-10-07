@@ -139,6 +139,33 @@ export type ItemsDeleteItemData = {
 
 export type ItemsDeleteItemResponse = (Message);
 
+export type ItemsReadAllItemsAdminData = {
+    limit?: number;
+    skip?: number;
+};
+
+export type ItemsReadAllItemsAdminResponse = (ItemsPublic);
+
+export type ItemsCreateItemAdminData = {
+    ownerId: string;
+    requestBody: ItemCreate;
+};
+
+export type ItemsCreateItemAdminResponse = (ItemPublic);
+
+export type ItemsUpdateItemAdminData = {
+    id: string;
+    requestBody: ItemUpdate;
+};
+
+export type ItemsUpdateItemAdminResponse = (ItemPublic);
+
+export type ItemsDeleteItemAdminData = {
+    id: string;
+};
+
+export type ItemsDeleteItemAdminResponse = (Message);
+
 export type LoginLoginAccessTokenData = {
     formData: Body_login_login_access_token;
 };

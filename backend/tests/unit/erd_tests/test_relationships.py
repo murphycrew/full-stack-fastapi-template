@@ -72,21 +72,21 @@ class TestERDWithRelationships:
         """Test that ERD generation includes relationship lines."""
         from erd.generator import ERDGenerator
 
-        # Create temporary model file
+        # Create temporary model file with unique names to avoid conflicts
         model_content = """
 from sqlmodel import SQLModel, Field, Relationship
 import uuid
 
-class User(SQLModel, table=True):
+class TestUser(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     name: str
-    items: list["Item"] = Relationship(back_populates="owner")
+    items: list["TestItem"] = Relationship(back_populates="owner")
 
-class Item(SQLModel, table=True):
+class TestItem(SQLModel, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     title: str
-    owner_id: uuid.UUID = Field(foreign_key="user.id")
-    owner: User | None = Relationship(back_populates="items")
+    owner_id: uuid.UUID = Field(foreign_key="testuser.id")
+    owner: TestUser | None = Relationship(back_populates="items")
 """
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
@@ -99,7 +99,8 @@ class Item(SQLModel, table=True):
 
             # Should contain relationship line
             assert (
-                "USER ||--o{ ITEM" in mermaid_code or "ITEM }o--|| USER" in mermaid_code
+                "TESTUSER ||--o{ TESTITEM" in mermaid_code
+                or "TESTITEM }o--|| TESTUSER" in mermaid_code
             )
             # Should not include relationship fields as regular fields
             assert "string items" not in mermaid_code
